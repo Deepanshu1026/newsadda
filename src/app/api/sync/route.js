@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { fetchLatestNews } from "../../../../services/newsService";
 import { generateBlogArticle } from "../../../../services/sarvamService";
 import { readDatabase, writeDatabase } from "../../../../services/db";
@@ -101,6 +102,9 @@ export async function POST() {
     if (addedCount > 0) {
       // Save updated database
       await writeDatabase(posts);
+      
+      // Force Next.js and browser caches to refresh for the main home feed
+      revalidatePath("/");
     }
 
     return NextResponse.json({
