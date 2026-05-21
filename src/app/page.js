@@ -19,9 +19,5 @@ async function getPosts() {
 export default async function HomePage() {
   const posts = await getPosts();
 
-  return (
-    <div className="main-wrapper">
-      <HomeFeed initialPosts={posts} />
-    </div>
-  );
+  return <HomeFeed initialPosts={posts} />;
 }

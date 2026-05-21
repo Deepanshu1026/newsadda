@@ -1,153 +1,294 @@
 "use client";
 
-import React, { useState } from "react";
-import BlogCard from "./BlogCard";
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
 
+// ─── Helper utilities ──────────────────────────────────────────────────────
+function getFallbackImage(category) {
+  const cat = (category || "").toLowerCase().trim();
+  if (cat.includes("cricket") || cat.includes("indian cricket"))
+    return "https://images.unsplash.com/photo-1540747737956-37872404a8de?q=80&w=1200&auto=format&fit=crop";
+  if (cat.includes("viral") || cat.includes("case"))
+    return "https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=1200&auto=format&fit=crop";
+  if (cat.includes("fashion"))
+    return "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?q=80&w=1200&auto=format&fit=crop";
+  if (cat.includes("polit") || cat.includes("govt") || cat.includes("elect"))
+    return "https://images.unsplash.com/photo-1541872703-74c5e44368f9?q=80&w=1200&auto=format&fit=crop";
+  if (cat.includes("artificial") || cat.includes("ai") || cat.includes("intelligence"))
+    return "https://images.unsplash.com/photo-1677442136019-21780efad99a?q=80&w=1200&auto=format&fit=crop";
+  if (cat.includes("web") || cat.includes("develop") || cat.includes("next"))
+    return "https://images.unsplash.com/photo-1618401471353-b98aedd07871?q=80&w=1200&auto=format&fit=crop";
+  return "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1200&auto=format&fit=crop";
+}
+
+function formatDate(dateStr) {
+  try {
+    return new Date(dateStr).toLocaleDateString("en-US", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
+// ─── Featured Post Card ────────────────────────────────────────────────────
+function FeaturedPost({ post }) {
+  const fallback = getFallbackImage(post.category);
+  return (
+    <Link href={`/posts/${post.id}`} style={{ display: "block" }}>
+      <article className="featured-post-card" id="featured-post-card">
+        <div className="featured-post-image-wrapper">
+          <img
+            src={post.image || fallback}
+            alt={post.title}
+            className="featured-post-image"
+            onError={(e) => { e.target.onerror = null; e.target.src = fallback; }}
+          />
+        </div>
+        <div>
+          <span className="featured-category-badge">
+            {post.category || "News"}
+          </span>
+        </div>
+        <h2 className="featured-post-title">{post.title}</h2>
+        <p className="featured-post-desc">{post.description}</p>
+        <div style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginTop: "4px" }}>
+          <span style={{ color: "var(--accent-primary)", fontWeight: 600 }}>
+            {post.author || "NewsAdda"}
+          </span>
+          <span style={{ margin: "0 6px" }}>•</span>
+          <span>{formatDate(post.publishedAt)}</span>
+        </div>
+      </article>
+    </Link>
+  );
+}
+
+// ─── Top Story Item ────────────────────────────────────────────────────────
+function TopStoryItem({ post, index }) {
+  const fallback = getFallbackImage(post.category);
+  return (
+    <Link href={`/posts/${post.id}`} style={{ display: "block" }}>
+      <article className="top-story-item" id={`top-story-item-${index}`}>
+        <div className="top-story-number" aria-label={`Story ${index + 1}`}>
+          {index + 1}
+        </div>
+        <div className="top-story-body">
+          <h3 className="top-story-title">{post.title}</h3>
+          <div className="top-story-meta">
+            <span>{post.author || "NewsAdda"}</span>
+            <span style={{ margin: "0 5px", color: "var(--text-muted)" }}>•</span>
+            <span style={{ color: "var(--text-muted)" }}>{formatDate(post.publishedAt)}</span>
+          </div>
+        </div>
+        <div className="top-story-thumbnail-wrapper">
+          <img
+            src={post.image || fallback}
+            alt={post.title}
+            className="top-story-thumbnail"
+            onError={(e) => { e.target.onerror = null; e.target.src = fallback; }}
+            loading="lazy"
+          />
+        </div>
+      </article>
+    </Link>
+  );
+}
+
+// ─── Grid Post Card ────────────────────────────────────────────────────────
+function GridPostCard({ post }) {
+  const fallback = getFallbackImage(post.category);
+  return (
+    <Link href={`/posts/${post.id}`} style={{ display: "block" }}>
+      <article className="grid-post-card" id={`grid-post-card-${post.id}`}>
+        <div className="grid-post-image-wrapper">
+          <img
+            src={post.image || fallback}
+            alt={post.title}
+            className="grid-post-image"
+            onError={(e) => { e.target.onerror = null; e.target.src = fallback; }}
+            loading="lazy"
+          />
+        </div>
+
+        {/* Author • Date */}
+        <div className="grid-post-meta">
+          <span className="grid-post-meta-author">{post.author || "NewsAdda"}</span>
+          <span>•</span>
+          <span>{formatDate(post.publishedAt)}</span>
+        </div>
+
+        {/* Title + arrow */}
+        <div className="grid-post-title-row">
+          <h3 className="grid-post-title">{post.title}</h3>
+          <span className="grid-post-arrow" aria-hidden="true">↗</span>
+        </div>
+
+        {/* Excerpt */}
+        <p className="grid-post-desc">{post.description}</p>
+
+        {/* Category pill */}
+        {post.category && (
+          <div className="grid-post-tags">
+            <span className="tag-pill">{post.category}</span>
+            {post.readTime && (
+              <span className="tag-pill" style={{ background: "#fff", border: "1px solid var(--border-subtle)", color: "var(--text-muted)" }}>
+                {post.readTime}
+              </span>
+            )}
+          </div>
+        )}
+      </article>
+    </Link>
+  );
+}
+
+// ─── Main Feed ─────────────────────────────────────────────────────────────
 export default function HomeFeed({ initialPosts = [] }) {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Safely extract unique categories from actual articles in the database
+  // Pick up search from navbar URL params
+  useEffect(() => {
+    const readSearch = () => {
+      const params = new URLSearchParams(window.location.search);
+      setSearchQuery(params.get("search") || "");
+    };
+    readSearch();
+    window.addEventListener("popstate", readSearch);
+    // Poll lightly for URL changes triggered by the Navbar router.replace
+    const interval = setInterval(readSearch, 300);
+    return () => {
+      window.removeEventListener("popstate", readSearch);
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Unique categories
   const categories = [
     "All",
-    ...Array.from(
-      new Set(initialPosts.map((post) => post.category).filter(Boolean))
-    ),
+    ...Array.from(new Set(initialPosts.map((p) => p.category).filter(Boolean))),
   ];
 
-  // Filter posts based on active category selection and search query
+  // Filter
   const filteredPosts = initialPosts.filter((post) => {
-    const matchesCategory =
+    const matchesCat =
       selectedCategory === "All" ||
       (post.category &&
-        post.category.toLowerCase().trim() ===
-          selectedCategory.toLowerCase().trim());
+        post.category.toLowerCase().trim() === selectedCategory.toLowerCase().trim());
 
+    const q = searchQuery.trim().toLowerCase();
     const matchesSearch =
-      searchQuery.trim() === "" ||
-      post.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.content?.toLowerCase().includes(searchQuery.toLowerCase());
+      !q ||
+      post.title?.toLowerCase().includes(q) ||
+      post.description?.toLowerCase().includes(q) ||
+      post.content?.toLowerCase().includes(q);
 
-    return matchesCategory && matchesSearch;
+    return matchesCat && matchesSearch;
   });
 
+  // Slice
+  const featuredPost = filteredPosts[0] || null;
+  const topStories = filteredPosts.slice(1, 4);
+  const gridPosts = filteredPosts.slice(4);
+
   return (
-    <div className="content-panel">
-      {/* Premium Hero Title and Modern Search Controls */}
-      <div className="feed-header-section" style={{
-        background: "rgba(255, 255, 255, 0.7)",
-        padding: "32px",
-        borderRadius: "20px",
-        border: "1px solid var(--border-subtle)",
-        backdropFilter: "blur(10px)",
-        boxShadow: "var(--glass-shadow)"
-      }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "20px" }}>
-          <div>
-            <h1 style={{ fontSize: "2.2rem", fontWeight: "800", letterSpacing: "-0.5px" }}>
-              Explore the <span className="logo-accent">Latest Updates</span>
-            </h1>
-            <p style={{ color: "var(--text-secondary)", marginTop: "4px", fontSize: "0.98rem" }}>
-              Curated, SEO-enhanced, and real-time coverage from leading worldwide publishers.
-            </p>
-          </div>
+    <div className="main-wrapper">
+      <div className="content-panel">
 
-          {/* Sleek Search Bar */}
-          <div style={{ position: "relative", width: "100%", maxWidth: "320px" }}>
-            <span style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.3-4.3" />
-              </svg>
-            </span>
-            <input
-              type="text"
-              placeholder="Search news and blogs..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "12px 16px 12px 42px",
-                borderRadius: "12px",
-                border: "1px solid var(--border-subtle)",
-                outline: "none",
-                fontSize: "0.92rem",
-                color: "var(--text-primary)",
-                background: "var(--bg-card)",
-                transition: "all 0.2s ease"
-              }}
-              className="search-input-field"
-            />
-          </div>
-        </div>
+        {/* ── Hero / Blog Header ─────────────────────────────── */}
+        <section className="feed-hero" id="blog-hero-section" aria-label="Blog header">
+          <span className="feed-hero-eyebrow">Our Blog</span>
+          <h1 className="feed-hero-title">Stories &amp; Ideas</h1>
+          <p className="feed-hero-desc">
+            Curated, AI-powered coverage from the world's leading publishers — real-time and
+            SEO-optimised.
+          </p>
+        </section>
 
-        {/* Dynamic Category Navigation Menu */}
-        <div style={{
-          display: "flex",
-          gap: "8px",
-          marginTop: "28px",
-          overflowX: "auto",
-          paddingBottom: "8px",
-          scrollbarWidth: "none"
-        }} className="category-scroll-bar">
+        {/* ── Category Filters ───────────────────────────────── */}
+        <nav
+          id="category-filter-nav"
+          className="category-filter-row"
+          aria-label="Category filters"
+        >
           {categories.map((cat) => {
-            const isActive = selectedCategory.toLowerCase().trim() === cat.toLowerCase().trim();
+            const isActive =
+              selectedCategory.toLowerCase().trim() === cat.toLowerCase().trim();
             return (
               <button
                 key={cat}
+                id={`cat-btn-${cat.toLowerCase().replace(/\s+/g, "-")}`}
+                className={`category-pill-btn${isActive ? " active" : ""}`}
                 onClick={() => setSelectedCategory(cat)}
-                style={{
-                  padding: "8px 18px",
-                  borderRadius: "30px",
-                  border: "1px solid",
-                  borderColor: isActive ? "var(--accent-primary)" : "var(--border-subtle)",
-                  background: isActive ? "var(--accent-primary)" : "var(--bg-card)",
-                  color: isActive ? "#ffffff" : "var(--text-secondary)",
-                  fontSize: "0.88rem",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  whiteSpace: "nowrap",
-                  transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-                  boxShadow: isActive ? "0 4px 12px rgba(79, 70, 229, 0.2)" : "none"
-                }}
-                className={`category-btn-pill ${isActive ? "active" : ""}`}
+                aria-pressed={isActive}
               >
                 {cat}
               </button>
             );
           })}
-        </div>
-      </div>
+        </nav>
 
-      {/* Grid Feed Container */}
-      {filteredPosts.length === 0 ? (
-        <div style={{
-          textAlign: "center",
-          padding: "60px 20px",
-          background: "var(--bg-card)",
-          borderRadius: "16px",
-          border: "1px solid var(--border-subtle)",
-          color: "var(--text-muted)",
-          fontSize: "1rem"
-        }}>
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ margin: "0 auto 12px", display: "block" }}>
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 8v4M12 16h.01" />
-          </svg>
-          No articles found for "{selectedCategory}" matching your search.
-        </div>
-      ) : (
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-          gap: "28px"
-        }} className="news-cards-grid">
-          {filteredPosts.map((post) => (
-            <BlogCard key={post.id} post={post} />
-          ))}
-        </div>
-      )}
+        {/* ── Empty state ────────────────────────────────────── */}
+        {!featuredPost && (
+          <div className="empty-state" id="empty-state-notice">
+            <svg
+              width="44"
+              height="44"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              style={{ margin: "0 auto 12px", display: "block", opacity: 0.4 }}
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 8v4M12 16h.01" />
+            </svg>
+            No articles found
+            {searchQuery ? ` for "${searchQuery}"` : ""}
+            {selectedCategory !== "All" ? ` in "${selectedCategory}"` : ""}.
+          </div>
+        )}
+
+        {/* ── Split: Featured + Top Stories ─────────────────── */}
+        {featuredPost && (
+          <section className="split-layout" id="split-layout-section">
+            {/* Left: Featured */}
+            <div>
+              <FeaturedPost post={featuredPost} />
+            </div>
+
+            {/* Right: Top Stories */}
+            <aside id="top-stories-panel">
+              <h2 className="top-stories-heading">Top Stories</h2>
+              <div>
+                {topStories.map((post, i) => (
+                  <TopStoryItem key={post.id} post={post} index={i} />
+                ))}
+                {topStories.length === 0 && (
+                  <p style={{ color: "var(--text-muted)", fontSize: "0.88rem" }}>
+                    No additional stories.
+                  </p>
+                )}
+              </div>
+            </aside>
+          </section>
+        )}
+
+        {/* ── Grid Cards ─────────────────────────────────────── */}
+        {gridPosts.length > 0 && (
+          <section id="grid-posts-section" aria-label="All stories">
+            <div className="grid-section-divider" />
+            <div className="grid-cards-container">
+              {gridPosts.map((post) => (
+                <GridPostCard key={post.id} post={post} />
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
     </div>
   );
 }
