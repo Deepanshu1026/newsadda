@@ -181,8 +181,9 @@ a {
 .content-panel {
   flex: 1;
   min-width: 0;
-  margin-left: calc(var(--sidebar-width) + 24px);
-  margin-right: calc(var(--sidebar-width) + 24px);
+  max-width: 1000px;
+  margin: 0 auto;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 32px;

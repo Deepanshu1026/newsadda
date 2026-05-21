@@ -4,7 +4,10 @@ import React, { useState, useEffect } from "react";
 
 export default function AdSlot({ placement }) {
   const [visible, setVisible] = useState(true);
+  const [isProduction, setIsProduction] = useState(false);
+  const [forceLive, setForceLive] = useState(false);
   const [floodColors, setFloodColors] = useState(["#3b82f6", "#ef4444", "#10b981", "#fbbf24"]);
+  
   // Flood-It game state (4x4 grid representation)
   const [grid, setGrid] = useState([
     [0, 1, 2, 3],
@@ -14,27 +17,30 @@ export default function AdSlot({ placement }) {
   ]);
   const [moves, setMoves] = useState(0);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      // Treat as production if on custom domain or built for production
+      const isProd = process.env.NODE_ENV === "production" || !window.location.hostname.includes("localhost");
+      setIsProduction(isProd);
+
+      const storedForceLive = localStorage.getItem("newsadda_force_live_ads") === "true";
+      setForceLive(storedForceLive);
+
+      if (isProd || storedForceLive) {
+        try {
+          (window.adsbygoogle = window.adsbygoogle || []).push({});
+        } catch (e) {
+          console.warn("[AdSense] Init delay or ad unit skipped:", e.message);
+        }
+      }
+    }
+  }, []);
+
   if (!visible) return null;
 
-  // Flood-It color click handler
-  const handleFloodColorClick = (colorIndex) => {
-    const targetColor = grid[0][0];
-    if (targetColor === colorIndex) return;
-
-    let newGrid = grid.map(row => [...row]);
-    const flood = (r, c) => {
-      if (r < 0 || r >= 4 || c < 0 || c >= 4) return;
-      if (newGrid[r][c] !== targetColor) return;
-      newGrid[r][c] = colorIndex;
-      flood(r + 1, c);
-      flood(r - 1, c);
-      flood(r, c + 1);
-      flood(r, c - 1);
-    };
-
-    flood(0, 0);
-    setGrid(newGrid);
-    setMoves(moves + 1);
+  // Dismiss banner handler
+  const handleDismiss = () => {
+    setVisible(false);
   };
 
   // Google Test Ad Multi-color Capsule Logo SVG
@@ -58,9 +64,82 @@ export default function AdSlot({ placement }) {
     containerClass += "inline-ad";
   }
 
-  // Dismiss banner handler
-  const handleDismiss = () => {
-    setVisible(false);
+  // If in production or forced live on localhost, deliver real Google AdSense units using verified publisher ID
+  const isReal = isProduction || forceLive;
+
+  if (isReal) {
+    return (
+      <div className={containerClass} style={{ 
+        overflow: "hidden", 
+        background: "rgba(15, 23, 42, 0.01)", 
+        border: "1px dashed rgba(15, 23, 42, 0.08)", 
+        borderRadius: "12px", 
+        display: "flex", 
+        flexDirection: "column",
+        justifyContent: "center", 
+        alignItems: "center",
+        width: "100%",
+        height: "100%",
+        minHeight: placement === "left" || placement === "right" ? "600px" : placement === "bottom" ? "90px" : "250px",
+        position: "relative"
+      }}>
+        {/* Visual toggle in dev to switch back to sandbox if they want */}
+        {!isProduction && (
+          <button 
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              localStorage.setItem("newsadda_force_live_ads", "false");
+              window.location.reload();
+            }}
+            style={{
+              position: "absolute",
+              top: "4px",
+              right: "4px",
+              background: "var(--accent-primary)",
+              color: "white",
+              fontSize: "9px",
+              padding: "3px 8px",
+              borderRadius: "4px",
+              border: "none",
+              cursor: "pointer",
+              zIndex: 100,
+              fontWeight: "bold",
+              boxShadow: "0 2px 5px rgba(0,0,0,0.15)",
+              fontFamily: "var(--font-body)"
+            }}
+          >
+            Live Ad (Toggle Sandbox)
+          </button>
+        )}
+        <ins className="adsbygoogle"
+             style={{ display: "block", width: "100%", height: "100%" }}
+             data-ad-client="ca-pub-8945078741780854"
+             data-ad-format={placement === "left" || placement === "right" ? "vertical" : placement === "bottom" ? "horizontal" : "auto"}
+             data-full-width-responsive="true" />
+      </div>
+    );
+  }
+
+  // Flood-It color click handler
+  const handleFloodColorClick = (colorIndex) => {
+    const targetColor = grid[0][0];
+    if (targetColor === colorIndex) return;
+
+    let newGrid = grid.map(row => [...row]);
+    const flood = (r, c) => {
+      if (r < 0 || r >= 4 || c < 0 || c >= 4) return;
+      if (newGrid[r][c] !== targetColor) return;
+      newGrid[r][c] = colorIndex;
+      flood(r + 1, c);
+      flood(r - 1, c);
+      flood(r, c + 1);
+      flood(r, c - 1);
+    };
+
+    flood(0, 0);
+    setGrid(newGrid);
+    setMoves(moves + 1);
   };
 
   return (
@@ -72,6 +151,36 @@ export default function AdSlot({ placement }) {
       
       {/* Yellow Test Ad Badge */}
       <div className="ad-badge">Test Ad</div>
+
+      {/* Visual toggle in dev to switch to live AdSense tag */}
+      {!isProduction && (
+        <button 
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            localStorage.setItem("newsadda_force_live_ads", "true");
+            window.location.reload();
+          }}
+          style={{
+            position: "absolute",
+            top: "8px",
+            right: "8px",
+            background: "var(--text-primary)",
+            color: "#fbbf24",
+            fontSize: "9px",
+            padding: "3px 8px",
+            borderRadius: "4px",
+            border: "1px solid rgba(251, 191, 36, 0.3)",
+            cursor: "pointer",
+            zIndex: 100,
+            fontWeight: "bold",
+            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+            fontFamily: "var(--font-body)"
+          }}
+        >
+          Show Real Ad
+        </button>
+      )}
 
       {placement === "left" && (
         <div className="floodit-ad-card">

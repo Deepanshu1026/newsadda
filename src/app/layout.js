@@ -1,6 +1,6 @@
 import "./globals.css";
-import AdSlot from "../../components/AdSlot";
 import Link from "next/link";
+import Script from "next/script";
 
 export const metadata = {
   title: "NewsAdda - AI-Powered Automated Tech Blog",
@@ -28,6 +28,12 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
+        <Script 
+          async 
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8945078741780854"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
         <div className="app-container">
           {/* Header Navigation */}
           <header className="navbar">
@@ -52,23 +58,8 @@ export default function RootLayout({ children }) {
             </div>
           </header>
 
-          {/* Left Sidebar Fixed Ad */}
-          <aside className="sidebar-ad-left">
-            <AdSlot placement="left" />
-          </aside>
-
-          {/* Right Sidebar Fixed Ad */}
-          <aside className="sidebar-ad-right">
-            <AdSlot placement="right" />
-          </aside>
-
           {/* Core Content Viewport */}
           {children}
-
-          {/* Bottom Sticky Ad Slot */}
-          <div className="sticky-bottom-ad-container">
-            <AdSlot placement="bottom" />
-          </div>
 
           {/* Shared Site Footer */}
           <footer className="footer">

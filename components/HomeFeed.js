@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import BlogCard from "./BlogCard";
-import AdSlot from "./AdSlot";
 
 export default function HomeFeed({ initialPosts = [] }) {
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -144,21 +143,9 @@ export default function HomeFeed({ initialPosts = [] }) {
           gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
           gap: "28px"
         }} className="news-cards-grid">
-          {filteredPosts.map((post, index) => {
-            // Beautifully intersperse an inline Google AdSense slot after every 3 cards
-            const showInlineAd = index > 0 && index % 3 === 0;
-
-            return (
-              <React.Fragment key={post.id}>
-                {showInlineAd && (
-                  <div style={{ gridColumn: "1 / -1" }}>
-                    <AdSlot placement="inline" />
-                  </div>
-                )}
-                <BlogCard post={post} />
-              </React.Fragment>
-            );
-          })}
+          {filteredPosts.map((post) => (
+            <BlogCard key={post.id} post={post} />
+          ))}
         </div>
       )}
     </div>

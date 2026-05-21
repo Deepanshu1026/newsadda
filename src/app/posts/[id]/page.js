@@ -3,7 +3,6 @@ import path from "path";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ViewIncrementer from "../../../../components/ViewIncrementer";
-import AdSlot from "../../../../components/AdSlot";
 
 export const dynamic = "force-dynamic";
 
@@ -237,11 +236,6 @@ export default async function ArticlePage({ params }) {
             {parseMarkdownToReact(post.content)}
           </div>
         </article>
-
-        {/* Dynamic Inline Ad in Footer of Article */}
-        <div style={{ marginTop: "48px" }}>
-          <AdSlot placement="inline" />
-        </div>
       </div>
     </div>
   );
