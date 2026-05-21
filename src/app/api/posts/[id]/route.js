@@ -1,19 +1,10 @@
 import { NextResponse } from "next/server";
-import fs from "fs/promises";
-import path from "path";
+import { readDatabase, writeDatabase } from "../../../../../services/db";
 
 export async function POST(request, { params }) {
   try {
     const { id } = await params;
-    const dbPath = path.join(process.cwd(), "database.json");
-    
-    let posts = [];
-    try {
-      const fileData = await fs.readFile(dbPath, "utf-8");
-      posts = JSON.parse(fileData);
-    } catch (e) {
-      return NextResponse.json({ error: "Database file not found" }, { status: 404 });
-    }
+    const posts = await readDatabase();
 
     const postIndex = posts.findIndex(p => p.id === id);
     if (postIndex === -1) {
@@ -23,8 +14,8 @@ export async function POST(request, { params }) {
     // Increment view count
     posts[postIndex].views = (posts[postIndex].views || 0) + 1;
 
-    // Write back to database.json
-    await fs.writeFile(dbPath, JSON.stringify(posts, null, 2), "utf-8");
+    // Save updated database
+    await writeDatabase(posts);
 
     return NextResponse.json({ success: true, views: posts[postIndex].views });
   } catch (error) {

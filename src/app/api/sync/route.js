@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import fs from "fs/promises";
-import path from "path";
 import { fetchLatestNews } from "../../../../services/newsService";
 import { generateBlogArticle } from "../../../../services/sarvamService";
+import { readDatabase, writeDatabase } from "../../../../services/db";
 
 function getCategoryImage(category) {
   const images = {
@@ -38,16 +37,8 @@ export async function POST() {
     global.lastSyncTime = new Date().toISOString();
     global.lastSyncTime = new Date().toISOString(); // Maintain compatibility for dashboard caching
     
-    const dbPath = path.join(process.cwd(), "database.json");
-    
     // Read existing database
-    let posts = [];
-    try {
-      const fileData = await fs.readFile(dbPath, "utf-8");
-      posts = JSON.parse(fileData);
-    } catch (e) {
-      console.warn("[Sync API] database.json not found, initializing empty array.");
-    }
+    let posts = await readDatabase();
 
     const categoriesStr = process.env.CRON_CATEGORIES || "technology,science,business";
     const categories = categoriesStr.split(",").map(c => c.trim().toLowerCase());
@@ -108,8 +99,8 @@ export async function POST() {
     }
 
     if (addedCount > 0) {
-      // Save updated database back to disk
-      await fs.writeFile(dbPath, JSON.stringify(posts, null, 2), "utf-8");
+      // Save updated database
+      await writeDatabase(posts);
     }
 
     return NextResponse.json({

@@ -1,16 +1,13 @@
-import fs from "fs/promises";
-import path from "path";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ViewIncrementer from "../../../../components/ViewIncrementer";
+import { readDatabase } from "../../../../services/db";
 
 export const dynamic = "force-dynamic";
 
 async function getPostById(id) {
-  const dbPath = path.join(process.cwd(), "database.json");
   try {
-    const fileData = await fs.readFile(dbPath, "utf-8");
-    const posts = JSON.parse(fileData);
+    const posts = await readDatabase();
     return posts.find((p) => p.id === id);
   } catch (error) {
     console.error(`[Article Page] Error reading post ID ${id}:`, error.message);
