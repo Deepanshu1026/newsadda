@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -57,10 +58,19 @@ export default function Navbar() {
         <div className="navbar-content">
           {/* Logo */}
           <Link href="/" className="logo-wrapper" id="nav-logo-link">
-            <div className="logo-icon">N</div>
-            <span className="logo-text">
-              News<span className="logo-accent">Adda</span>
-            </span>
+            <Image
+              src="/logo.png"
+              alt="NewsAdda"
+              width={160}
+              height={36}
+              style={{
+                height: "36px",
+                width: "auto",
+                objectFit: "contain",
+                display: "block"
+              }}
+              priority
+            />
           </Link>
 
           {/* Desktop centered nav links */}

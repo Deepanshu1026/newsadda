@@ -203,7 +203,7 @@ export default function HomeFeed({ initialPosts = [] }) {
           <span className="feed-hero-eyebrow">Our Blog</span>
           <h1 className="feed-hero-title">Stories &amp; Ideas</h1>
           <p className="feed-hero-desc">
-            Curated, AI-powered coverage from the world's leading publishers — real-time and
+            Curated, trusted and fast news coverage from the world's leading publishers — real-time and
             SEO-optimised.
           </p>
         </section>
