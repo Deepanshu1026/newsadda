@@ -17,6 +17,156 @@ export default function AdminPanel({ onSyncComplete }) {
   const [statusMessage, setStatusMessage] = useState("");
   const [forceLiveAds, setForceLiveAds] = useState(false);
 
+  // Manual News Selection Hub States
+  const [activeCategory, setActiveCategory] = useState("politics");
+  const [headlines, setHeadlines] = useState([]);
+  const [loadingHeadlines, setLoadingHeadlines] = useState(false);
+  const [selectedArticles, setSelectedArticles] = useState([]);
+  const [bulkGenerating, setBulkGenerating] = useState(false);
+  const [bulkLogs, setBulkLogs] = useState([]);
+  const [bulkStatus, setBulkStatus] = useState("");
+  // Client-side cache to avoid repeated queries and preserve API quota
+  const [cachedHeadlines, setCachedHeadlines] = useState({});
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchedTerm, setSearchedTerm] = useState("");
+
+  const fetchTrendingHeadlines = async (cat, force = false, isSearch = false) => {
+    const canCache = !isSearch;
+
+    if (!force && canCache && cachedHeadlines[cat]) {
+      setHeadlines(cachedHeadlines[cat]);
+      setSelectedArticles([]);
+      return;
+    }
+
+    setLoadingHeadlines(true);
+    try {
+      const res = await fetch(`/api/trending-news?category=${encodeURIComponent(cat)}`);
+      if (res.ok) {
+        const data = await res.json();
+        const categoryHeadlines = data.headlines || [];
+        setHeadlines(categoryHeadlines);
+        if (canCache) {
+          setCachedHeadlines(prev => ({
+            ...prev,
+            [cat]: categoryHeadlines
+          }));
+        }
+        setSelectedArticles([]);
+      } else {
+        console.error("Failed to fetch headlines");
+      }
+    } catch (e) {
+      console.error("Error fetching headlines:", e);
+    } finally {
+      setLoadingHeadlines(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeCategory) {
+      setSearchedTerm("");
+      setSearchQuery("");
+      fetchTrendingHeadlines(activeCategory);
+    }
+  }, [activeCategory]);
+
+  const handleSearchSubmit = async (e) => {
+    e.preventDefault();
+    const query = searchQuery.trim();
+    if (!query) return;
+
+    setActiveCategory("");
+    setSearchedTerm(query);
+    fetchTrendingHeadlines(query, false, true);
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery("");
+    setSearchedTerm("");
+    setActiveCategory("politics");
+  };
+
+  const handleToggleSelect = (title) => {
+    setSelectedArticles(prev => 
+      prev.includes(title) 
+        ? prev.filter(t => t !== title) 
+        : [...prev, title]
+    );
+  };
+
+  const handleToggleSelectAll = () => {
+    if (selectedArticles.length === headlines.length) {
+      setSelectedArticles([]);
+    } else {
+      setSelectedArticles(headlines.map(h => h.title));
+    }
+  };
+
+  const handleBulkGenerate = async () => {
+    if (selectedArticles.length === 0) return;
+    
+    setBulkGenerating(true);
+    setBulkStatus("Starting manual AI blog generation...");
+    setBulkLogs(["[System] Starting manual bulk generation for " + selectedArticles.length + " article(s)..."]);
+    
+    try {
+      const articlesToSend = selectedArticles.map(title => {
+        const found = headlines.find(h => h.title === title);
+        return {
+          title: found.title,
+          description: found.description,
+          category: activeCategory || searchedTerm || "News",
+          image: found.image,
+          author: found.author
+        };
+      });
+
+      setBulkLogs(prev => [...prev, "[News Client] Packaging selected headlines..."]);
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      for (let i = 0; i < articlesToSend.length; i++) {
+        const art = articlesToSend[i];
+        setBulkLogs(prev => [...prev, `[Sarvam AI] Writing blog article ${i + 1}/${articlesToSend.length}: "${art.title}"...`]);
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      setBulkLogs(prev => [...prev, "[Database] Saving new articles persistently to Firestore..."]);
+      
+      const res = await fetch("/api/sync/manual", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ articles: articlesToSend })
+      });
+      
+      if (res.ok) {
+        const result = await res.json();
+        setBulkLogs(prev => [
+          ...prev,
+          `[Firestore] Successfully saved ${result.generatedCount} new articles!`,
+          "[System] Bulk generation completed successfully."
+        ]);
+        setBulkStatus("Bulk generation completed!");
+        
+        fetchStats();
+        router.refresh();
+        if (onSyncComplete) onSyncComplete();
+        
+        setSelectedArticles([]);
+      } else {
+        const err = await res.json();
+        setBulkLogs(prev => [...prev, `[Error] Generation failed: ${err.error || "Unknown error"}`]);
+        setBulkStatus("Generation failed.");
+      }
+    } catch (error) {
+      console.error(error);
+      setBulkLogs(prev => [...prev, `[Error] Connection failed: ${error.message}`]);
+      setBulkStatus("Connection error.");
+    } finally {
+      setBulkGenerating(false);
+    }
+  };
+
   const fetchStats = async () => {
     try {
       const res = await fetch("/api/cron-status");
@@ -377,6 +527,326 @@ export default function AdminPanel({ onSyncComplete }) {
             </div>
           )}
         </div>
+      </div>
+
+      {/* CARD: Premium Manually Select & Write AI Blogs */}
+      <div className="dashboard-card" style={{ borderTop: "4px solid var(--accent-purple)" }}>
+        <div className="dashboard-header">
+          <div className="dashboard-title-group" style={{ flex: 1, minWidth: "250px" }}>
+            <h2 className="dashboard-title">
+              Manual <span className="logo-accent" style={{ background: "linear-gradient(to right, var(--accent-purple), var(--accent-secondary))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>News Selection Hub</span>
+            </h2>
+            <p className="dashboard-subtitle">
+              Fetch real-time trending stories across categories. Select articles to write and save directly to Cloud Firestore.
+            </p>
+          </div>
+          <button
+            className="btn-secondary"
+            onClick={() => {
+              const term = activeCategory || searchedTerm;
+              if (term) {
+                fetchTrendingHeadlines(term, true, !activeCategory);
+              }
+            }}
+            disabled={loadingHeadlines || bulkGenerating}
+            style={{
+              padding: "8px 14px",
+              fontSize: "0.82rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              height: "fit-content"
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={loadingHeadlines ? "spinner" : ""} style={loadingHeadlines ? { animation: "spin 0.8s linear infinite" } : {}}>
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+            </svg>
+            <span>{loadingHeadlines ? "Refreshing..." : "Force Refresh"}</span>
+          </button>
+        </div>
+
+        {/* Categories Bar & Custom Search Box */}
+        <div style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: "16px",
+          marginBottom: "16px"
+        }}>
+          <div className="category-bar" style={{ marginBottom: 0, paddingBottom: 0 }}>
+            {["politics", "cricket", "technology", "science", "business", "crime"].map((cat) => (
+              <button
+                key={cat}
+                className={`category-btn ${activeCategory === cat ? "active" : ""}`}
+                onClick={() => setActiveCategory(cat)}
+                disabled={bulkGenerating}
+                style={activeCategory === cat ? {
+                  background: "var(--accent-purple)",
+                  borderColor: "var(--accent-purple)",
+                  boxShadow: "0 4px 12px rgba(124, 58, 237, 0.25)"
+                } : {}}
+              >
+                {cat.charAt(0).toUpperCase() + cat.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          {/* Premium Search Box */}
+          <form onSubmit={handleSearchSubmit} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2.5" style={{ position: "absolute", left: "12px" }}>
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input
+                type="text"
+                placeholder="Search real-time news..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                disabled={bulkGenerating}
+                style={{
+                  padding: "8px 30px 8px 32px",
+                  borderRadius: "20px",
+                  border: "1px solid var(--border-subtle)",
+                  background: "var(--bg-surface-solid)",
+                  color: "var(--text-primary)",
+                  fontSize: "0.82rem",
+                  width: "200px",
+                  outline: "none",
+                  transition: "all 0.25s ease"
+                }}
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={handleClearSearch}
+                  style={{
+                    position: "absolute",
+                    right: "10px",
+                    background: "none",
+                    border: "none",
+                    color: "var(--text-muted)",
+                    cursor: "pointer",
+                    fontSize: "1.1rem",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: 0
+                  }}
+                  title="Clear Search"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+            <button
+              type="submit"
+              className="category-btn"
+              disabled={bulkGenerating || !searchQuery.trim()}
+              style={{
+                padding: "7px 14px",
+                fontSize: "0.82rem",
+                background: "var(--accent-purple)",
+                borderColor: "var(--accent-purple)",
+                color: "#ffffff"
+              }}
+            >
+              Search
+            </button>
+          </form>
+        </div>
+
+        {/* Search Results Indicator */}
+        {searchedTerm && (
+          <div style={{
+            fontSize: "0.82rem",
+            color: "var(--text-muted)",
+            marginBottom: "16px",
+            display: "flex",
+            alignItems: "center",
+            gap: "6px"
+          }}>
+            <span>Showing search results for:</span>
+            <span style={{
+              color: "var(--accent-purple)",
+              background: "rgba(124, 58, 237, 0.08)",
+              padding: "2px 8px",
+              borderRadius: "12px",
+              border: "1px solid rgba(124, 58, 237, 0.15)",
+              fontWeight: "600"
+            }}>
+              "{searchedTerm}"
+            </span>
+          </div>
+        )}
+
+        {/* Headlines List Grid */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px", maxHeight: "360px", overflowY: "auto", paddingRight: "4px", border: "1px solid var(--border-subtle)", borderRadius: "12px", padding: "12px", background: "rgba(15, 23, 42, 0.01)" }}>
+          {loadingHeadlines ? (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "12px", padding: "40px 0" }}>
+              <div className="spinner" style={{ width: "32px", height: "32px", borderWidth: "3px", borderTopColor: "var(--accent-purple)" }} />
+              <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: "500" }}>Fetching real-time headlines...</span>
+            </div>
+          ) : headlines.length === 0 ? (
+            <div style={{ padding: "32px 0", textAlign: "center", color: "var(--text-muted)", fontSize: "0.9rem" }}>
+              No recent headlines found for {activeCategory ? `category "${activeCategory}"` : `query "${searchedTerm}"`}.
+            </div>
+          ) : (
+            headlines.map((headline) => {
+              const isSelected = selectedArticles.includes(headline.title);
+              return (
+                <div
+                  key={headline.title}
+                  onClick={() => !bulkGenerating && handleToggleSelect(headline.title)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "16px",
+                    padding: "12px 16px",
+                    borderRadius: "10px",
+                    border: isSelected ? "1px solid var(--accent-purple)" : "1px solid var(--border-subtle)",
+                    background: isSelected ? "rgba(124, 58, 237, 0.03)" : "var(--bg-surface-solid)",
+                    cursor: bulkGenerating ? "not-allowed" : "pointer",
+                    transition: "all 0.2s ease",
+                    boxShadow: isSelected ? "0 2px 8px rgba(124, 58, 237, 0.05)" : "none"
+                  }}
+                  className="headline-item"
+                >
+                  {/* custom checkbox */}
+                  <div
+                    style={{
+                      width: "20px",
+                      height: "20px",
+                      borderRadius: "6px",
+                      border: isSelected ? "2px solid var(--accent-purple)" : "2px solid var(--text-muted)",
+                      background: isSelected ? "var(--accent-purple)" : "transparent",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      transition: "all 0.15s ease",
+                      flexShrink: 0
+                    }}
+                  >
+                    {isSelected && (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    )}
+                  </div>
+
+                  {/* Thumbnail / Source Image */}
+                  {headline.image && (
+                    <img
+                      src={headline.image}
+                      alt=""
+                      style={{
+                        width: "50px",
+                        height: "50px",
+                        borderRadius: "8px",
+                        objectFit: "cover",
+                        border: "1px solid var(--border-subtle)",
+                        flexShrink: 0
+                      }}
+                    />
+                  )}
+
+                  {/* Text Details */}
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px", minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                      <span style={{ fontSize: "0.72rem", background: "rgba(15, 23, 42, 0.05)", padding: "2px 6px", borderRadius: "4px", fontWeight: "600", color: "var(--text-secondary)" }}>
+                        {headline.source || "News Desk"}
+                      </span>
+                      <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>
+                        {new Date(headline.publishedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                      </span>
+                    </div>
+                    <h4 style={{ fontSize: "0.88rem", fontWeight: "600", color: "var(--text-primary)", margin: 0, textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                      {headline.title}
+                    </h4>
+                    <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", margin: 0, textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                      {headline.description || "Latest trending headline update."}
+                    </p>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Toolbar & Actions */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <button
+              className="btn-secondary"
+              onClick={handleToggleSelectAll}
+              disabled={loadingHeadlines || headlines.length === 0 || bulkGenerating}
+              style={{ padding: "8px 14px", fontSize: "0.82rem" }}
+            >
+              {selectedArticles.length === headlines.length && headlines.length > 0 ? "Deselect All" : "Select All"}
+            </button>
+            <span style={{ fontSize: "0.82rem", color: "var(--text-muted)", fontWeight: "500" }}>
+              {selectedArticles.length} of {headlines.length} headlines selected
+            </span>
+          </div>
+
+          <button
+            className="btn-primary"
+            onClick={handleBulkGenerate}
+            disabled={selectedArticles.length === 0 || bulkGenerating}
+            style={{
+              background: "var(--accent-purple)",
+              boxShadow: selectedArticles.length > 0 && !bulkGenerating ? "0 4px 14px rgba(124, 58, 237, 0.25)" : "none"
+            }}
+          >
+            {bulkGenerating ? (
+              <>
+                <div className="spinner" style={{ width: "16px", height: "16px", borderWidth: "2px", borderTopColor: "#ffffff" }} />
+                <span>Writing AI Blogs...</span>
+              </>
+            ) : (
+              <>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                </svg>
+                <span>Write AI Blogs for Selected ({selectedArticles.length})</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Bulk Generation Logger */}
+        {(bulkLogs.length > 0 || bulkStatus) && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {bulkStatus && (
+              <span style={{ fontSize: "0.82rem", color: "var(--text-secondary)", fontStyle: "italic" }}>
+                Status: {bulkStatus}
+              </span>
+            )}
+            <div style={{
+              background: "#08090d",
+              border: "1px solid var(--border-subtle)",
+              borderRadius: "10px",
+              padding: "12px 16px",
+              maxHeight: "150px",
+              overflowY: "auto",
+              fontFamily: "monospace",
+              fontSize: "0.78rem",
+              color: "var(--text-secondary)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "4px"
+            }}>
+              {bulkLogs.map((log, index) => (
+                <div key={index} style={{
+                  color: log.startsWith("[Error]") ? "#ef4444" : log.startsWith("[Firestore]") || log.startsWith("[System] Bulk generation completed") ? "#10b981" : "inherit"
+                }}>
+                  {log}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* CARD 2: Google AdSense Monetization Hub */}

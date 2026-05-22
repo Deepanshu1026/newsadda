@@ -16,11 +16,12 @@ export async function fetchLatestNews(category = "technology") {
       const isStandardCategory = ["business", "entertainment", "general", "health", "science", "sports", "technology"].includes(category.toLowerCase());
       let url;
       if (isStandardCategory) {
-        console.log(`[News Service] Fetching NewsAPI standard category: ${category}`);
-        url = `https://newsapi.org/v2/top-headlines?category=${category}&language=en&apiKey=${newsApiKey}`;
+        console.log(`[News Service] Fetching NewsAPI standard category: ${category} (India)`);
+        url = `https://newsapi.org/v2/top-headlines?country=in&category=${category}&language=en&apiKey=${newsApiKey}`;
       } else {
-        console.log(`[News Service] Fetching NewsAPI custom query: ${category}`);
-        url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(category)}&language=en&sortBy=publishedAt&pageSize=10&apiKey=${newsApiKey}`;
+        console.log(`[News Service] Fetching NewsAPI custom query: ${category} (India)`);
+        const queryTerm = category.toLowerCase().includes("india") ? category : `${category} India`;
+        url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(queryTerm)}&language=en&sortBy=publishedAt&pageSize=10&apiKey=${newsApiKey}`;
       }
 
       const response = await fetch(url);
@@ -54,8 +55,8 @@ export async function fetchLatestNews(category = "technology") {
   // 2. Query NewsData.io if key is configured
   if (newsDataApiKey) {
     try {
-      console.log(`[News Service] Querying NewsData.io for category: ${category}`);
-      const url = `https://newsdata.io/api/1/latest?apikey=${newsDataApiKey}&q=${encodeURIComponent(category)}&language=en`;
+      console.log(`[News Service] Querying NewsData.io for category: ${category} (India)`);
+      const url = `https://newsdata.io/api/1/latest?apikey=${newsDataApiKey}&q=${encodeURIComponent(category)}&country=in&language=en`;
       const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
@@ -191,12 +192,31 @@ function getFallbackHeadlines(category) {
 
   const techFallbacks = [
     {
-      title: "Google DeepMind Unveils Gemini 2.0 with Real-Time Multi-Modal Reflection Loops",
-      description: "The new AI model showcases zero-latency voice dialogues, complex visual canvas analysis, and programmatic tools orchestration.",
+      title: "India's AI Startup Scene Skyrockets as Bengaluru Hub Attracts Record Global Venture Capital",
+      description: "Indian artificial intelligence developers secure massive seed funding rounds from top Silicon Valley venture funds to build localized LLMs.",
       source: "TechCrunch",
-      author: "Frederic Lardinois",
+      author: "Manish Singh",
       publishedAt: new Date().toISOString(),
       image: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1200&auto=format&fit=crop"
+    }
+  ];
+
+  const crimeFallbacks = [
+    {
+      title: "Delhi Police Deploy Advanced Facial Recognition Systems to Curb Crime in Public Markets",
+      description: "Smart visual telemetry grids and mobile inspection modules are introduced in major city bazaars to audit security databases in real-time.",
+      source: "The Hindu",
+      author: "Alok Singh",
+      publishedAt: new Date().toISOString(),
+      image: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=1200&auto=format&fit=crop"
+    },
+    {
+      title: "Mumbai Cyber Cell Warns Citizens Against Sophisticated UPI Refund Scam Networks",
+      description: "Authorities raise alerts detailing fake transactional refund links circulated via social media applications to access mobile payment accounts.",
+      source: "NDTV India",
+      author: "Saurabh Gupta",
+      publishedAt: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
+      image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=1200&auto=format&fit=crop"
     }
   ];
 
@@ -204,5 +224,6 @@ function getFallbackHeadlines(category) {
   if (normalizedCategory.includes("viral")) return viralFallbacks;
   if (normalizedCategory.includes("fashion")) return fashionFallbacks;
   if (normalizedCategory.includes("polit") || normalizedCategory.includes("govt")) return politicalFallbacks;
+  if (normalizedCategory.includes("crime")) return crimeFallbacks;
   return techFallbacks;
 }
