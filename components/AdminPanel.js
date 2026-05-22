@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function AdminPanel({ onSyncComplete }) {
+  const router = useRouter();
   const [stats, setStats] = useState({
     totalPosts: 0,
     lastSync: null,
@@ -54,31 +56,55 @@ export default function AdminPanel({ onSyncComplete }) {
     setSyncLogs(["[System] Starting automated sync..."]);
     
     try {
-      const simulateLogs = [
+      // Step 1: Initial query logs
+      const initialLogs = [
         "[News Client] Accessing global headlines feed...",
-        "[News Client] Filtered out duplicate URLs successfully.",
-        "[Gemini Engine] Prompting Google Gemini AI with selected headlines...",
-        "[Gemini Engine] Writing extensive SEO-optimized articles...",
-        "[Database] Prepending generated content into database.json...",
-        "[System] Synchronization completed successfully!"
+        "[News Client] Filtering out duplicate URLs successfully.",
+        "[News Client] Checking headlines against database.json..."
       ];
-
-      // Send the actual API request to the backend
-      const responsePromise = fetch("/api/sync", { method: "POST" });
       
-      // Animate logs sequentially for highly engaging developer visual feedback
-      for (let i = 0; i < simulateLogs.length; i++) {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        setSyncLogs(prev => [...prev, simulateLogs[i]]);
-        setStatusMessage(simulateLogs[i]);
+      for (const log of initialLogs) {
+        await new Promise(resolve => setTimeout(resolve, 600));
+        setSyncLogs(prev => [...prev, log]);
+        setStatusMessage(log);
       }
 
-      const res = await responsePromise;
+      // Send the actual API request to the backend
+      const res = await fetch("/api/sync", { method: "POST" });
+      
       if (res.ok) {
         const result = await res.json();
-        setSyncLogs(prev => [...prev, `[Success] ${result.message}`]);
-        setStatusMessage("Synchronization complete!");
+        const count = result.addedCount || 0;
+        
+        if (count > 0) {
+          // If articles were actually added, show the generation steps
+          const addedLogs = [
+            "[Gemini Engine] Prompting Google Gemini AI with new headlines...",
+            `[Gemini Engine] Writing ${count} extensive SEO-optimized articles...`,
+            "[Database] Prepending generated content into database.json...",
+            "[System] Synchronization completed successfully!"
+          ];
+          for (const log of addedLogs) {
+            await new Promise(resolve => setTimeout(resolve, 600));
+            setSyncLogs(prev => [...prev, log]);
+            setStatusMessage(log);
+          }
+          setSyncLogs(prev => [...prev, `[Success] ${result.message}`]);
+          setStatusMessage("Synchronization complete!");
+        } else {
+          // No articles added
+          await new Promise(resolve => setTimeout(resolve, 600));
+          setSyncLogs(prev => [
+            ...prev,
+            "[News Client] No new unique headlines found.",
+            "[System] Synchronization finished: Database is already up to date."
+          ]);
+          setSyncLogs(prev => [...prev, `[Success] ${result.message}`]);
+          setStatusMessage("Database is already up to date.");
+        }
+        
         fetchStats();
+        router.refresh(); // Clear Next.js Client-Side Router Cache
         if (onSyncComplete) onSyncComplete();
       } else {
         const errorData = await res.json();
@@ -107,9 +133,65 @@ export default function AdminPanel({ onSyncComplete }) {
               Automated Google AdSense monetization layout combined with hands-free AI content ingestion.
             </p>
           </div>
-          <div className="sync-status-indicator">
-            <div className={`status-dot ${stats.cronActive ? "active" : ""}`} />
-            <span>Dev Cron Daemon: {stats.cronActive ? "Active" : "Offline"}</span>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", alignItems: "center" }}>
+            <div className="sync-status-indicator">
+              <div className={`status-dot ${stats.cronActive ? "active" : ""}`} />
+              <span>Dev Cron Daemon: {stats.cronActive ? "Active" : "Offline"}</span>
+            </div>
+            <div className="sync-status-indicator" style={{
+              background: stats.firebaseStatus && stats.firebaseStatus !== "none"
+                ? (stats.firebaseStatus === "active" ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)")
+                : (stats.isKvConnected 
+                  ? "rgba(16, 185, 129, 0.1)" 
+                  : stats.isVercel 
+                    ? "rgba(245, 158, 11, 0.1)" 
+                    : "rgba(99, 102, 241, 0.1)"),
+              border: stats.firebaseStatus && stats.firebaseStatus !== "none"
+                ? (stats.firebaseStatus === "active" ? "1px solid rgba(16, 185, 129, 0.2)" : "1px solid rgba(239, 68, 68, 0.2)")
+                : (stats.isKvConnected 
+                  ? "1px solid rgba(16, 185, 129, 0.2)" 
+                  : stats.isVercel 
+                    ? "1px solid rgba(245, 158, 11, 0.2)" 
+                    : "1px solid rgba(99, 102, 241, 0.2)"),
+              color: stats.firebaseStatus && stats.firebaseStatus !== "none"
+                ? (stats.firebaseStatus === "active" ? "#10b981" : "#ef4444")
+                : (stats.isKvConnected 
+                  ? "#10b981" 
+                  : stats.isVercel 
+                    ? "#f59e0b" 
+                    : "var(--accent-primary)")
+            }}>
+              <div className="status-dot" style={{
+                backgroundColor: stats.firebaseStatus && stats.firebaseStatus !== "none"
+                  ? (stats.firebaseStatus === "active" ? "#10b981" : "#ef4444")
+                  : (stats.isKvConnected 
+                    ? "#10b981" 
+                    : stats.isVercel 
+                      ? "#f59e0b" 
+                      : "var(--accent-primary)"),
+                boxShadow: stats.firebaseStatus && stats.firebaseStatus !== "none"
+                  ? (stats.firebaseStatus === "active" ? "0 0 8px #10b981" : "0 0 8px #ef4444")
+                  : (stats.isKvConnected 
+                    ? "0 0 8px #10b981" 
+                    : stats.isVercel 
+                      ? "0 0 8px #f59e0b" 
+                      : "0 0 8px var(--accent-primary)")
+              }} />
+              <span>
+                {stats.firebaseStatus && stats.firebaseStatus !== "none"
+                  ? (stats.firebaseStatus === "active"
+                    ? "DB: Persistent (Firebase RTDB)"
+                    : stats.firebaseStatus === "deactivated"
+                      ? "DB: Firebase Deactivated"
+                      : "DB: Firebase Error")
+                  : (stats.isKvConnected 
+                    ? "DB: Persistent (Vercel KV)" 
+                    : stats.isVercel 
+                      ? "DB: Ephemeral (Temporary)" 
+                      : "DB: Local Workspace (Persistent)")
+                }
+              </span>
+            </div>
           </div>
         </div>
 
@@ -138,7 +220,158 @@ export default function AdminPanel({ onSyncComplete }) {
           </div>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+        {stats.firebaseStatus === "deactivated" && (
+          <div style={{
+            background: "rgba(239, 68, 68, 0.05)",
+            border: "1px dashed rgba(239, 68, 68, 0.2)",
+            borderRadius: "12px",
+            padding: "16px 20px",
+            marginTop: "16px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#ef4444", fontWeight: "700", fontSize: "0.95rem" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              <span>Firebase Realtime Database Deactivated!</span>
+            </div>
+            <p style={{ margin: 0, fontSize: "0.83rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
+              Your Firebase Realtime Database is currently <strong>Deactivated/Locked</strong> by Google/Firebase due to inactivity. 
+              Newly synced articles are currently failing to save to the cloud, and the system is falling back to temporary or local storage.
+            </p>
+            <div style={{
+              background: "#08090d",
+              border: "1px solid var(--border-subtle)",
+              borderRadius: "8px",
+              padding: "12px",
+              marginTop: "4px",
+              fontSize: "0.78rem"
+            }}>
+              <strong style={{ color: "var(--text-primary)", display: "block", marginBottom: "4px" }}>How to Reactivate (1-Minute Fix):</strong>
+              <ol style={{ margin: 0, paddingLeft: "16px", display: "flex", flexDirection: "column", gap: "4px", color: "var(--text-secondary)" }}>
+                <li>Go to the <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent-primary)", textDecoration: "underline", fontWeight: "bold" }}>Firebase Console</a> &rarr; select project <strong>auth-5ccab</strong>.</li>
+                <li>In the left sidebar, expand <strong>Build</strong> and click on <strong>Realtime Database</strong>.</li>
+                <li>At the top of the page, click the prominent banner's <strong>Reactivate</strong> button.</li>
+                <li>Your database will be restored instantly!</li>
+              </ol>
+            </div>
+          </div>
+        )}
+
+        {stats.firebaseStatus === "error" && (
+          <div style={{
+            background: "rgba(239, 68, 68, 0.05)",
+            border: "1px dashed rgba(239, 68, 68, 0.2)",
+            borderRadius: "12px",
+            padding: "16px 20px",
+            marginTop: "16px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#ef4444", fontWeight: "700", fontSize: "0.95rem" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              <span>Firebase Realtime Database Connection Error</span>
+            </div>
+            <p style={{ margin: 0, fontSize: "0.83rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
+              The application encountered a connection error while trying to communicate with Firebase. Please verify that your 
+              Firebase rules allow public read/write access (e.g., <code>{`{ "rules": { ".read": true, ".write": true } }`}</code>) or that the configured database URL is correct.
+            </p>
+          </div>
+        )}
+
+        {stats.firebaseStatus === "active" && (
+          <div style={{
+            background: "rgba(16, 185, 129, 0.05)",
+            border: "1px dashed rgba(16, 185, 129, 0.2)",
+            borderRadius: "12px",
+            padding: "14px 18px",
+            marginTop: "16px",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px"
+          }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+            <span style={{ fontSize: "0.83rem", color: "var(--text-secondary)", lineHeight: "1.4" }}>
+              <strong style={{ color: "#10b981" }}>Cloud Persistence Active</strong>: Your database is safely connected to your <strong>Firebase Realtime Database</strong>. All articles are securely saved in the cloud and will remain persistent indefinitely.
+            </span>
+          </div>
+        )}
+
+        {(!stats.firebaseStatus || stats.firebaseStatus === "none") && stats.isVercel && !stats.isKvConnected && (
+          <div style={{
+            background: "rgba(245, 158, 11, 0.05)",
+            border: "1px dashed rgba(245, 158, 11, 0.2)",
+            borderRadius: "12px",
+            padding: "16px 20px",
+            marginTop: "16px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#f59e0b", fontWeight: "700", fontSize: "0.95rem" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              <span>Storage is Ephemeral (Articles Will Vanish!)</span>
+            </div>
+            <p style={{ margin: 0, fontSize: "0.83rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
+              You are running on Vercel, but <strong>Vercel KV is not connected</strong>. 
+              Newly synced articles are saved in a temporary directory and will <strong>vanish automatically after a few minutes</strong> when the serverless instance restarts.
+            </p>
+            <div style={{
+              background: "#08090d",
+              border: "1px solid var(--border-subtle)",
+              borderRadius: "8px",
+              padding: "12px",
+              marginTop: "4px",
+              fontSize: "0.78rem"
+            }}>
+              <strong style={{ color: "var(--text-primary)", display: "block", marginBottom: "4px" }}>To Fix Permanently (1-Click Guide):</strong>
+              <ol style={{ margin: 0, paddingLeft: "16px", display: "flex", flexDirection: "column", gap: "4px", color: "var(--text-secondary)" }}>
+                <li>Open your <strong>Vercel Dashboard</strong> &rarr; select <strong>newsadda</strong> &rarr; click <strong>Storage</strong> tab.</li>
+                <li>Create a <strong>KV (Redis)</strong> database and click <strong>Connect to Project</strong>.</li>
+                <li>Re-deploy your project. The application will instantly switch to cloud storage and posts will <strong>never vanish again!</strong></li>
+              </ol>
+            </div>
+          </div>
+        )}
+
+        {(!stats.firebaseStatus || stats.firebaseStatus === "none") && stats.isKvConnected && (
+          <div style={{
+            background: "rgba(16, 185, 129, 0.05)",
+            border: "1px dashed rgba(16, 185, 129, 0.2)",
+            borderRadius: "12px",
+            padding: "14px 18px",
+            marginTop: "16px",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px"
+          }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+            <span style={{ fontSize: "0.83rem", color: "var(--text-secondary)", lineHeight: "1.4" }}>
+              <strong style={{ color: "#10b981" }}>Cloud Persistence Active</strong>: Your database is safely connected to <strong>Vercel KV Store</strong>. All articles are securely saved in the cloud and will remain persistent indefinitely.
+            </span>
+          </div>
+        )}
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "16px" }}>
           <div className="sync-actions">
             <button className="btn-primary" onClick={handleSync} disabled={loading}>
               {loading ? (

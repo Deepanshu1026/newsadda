@@ -109,6 +109,7 @@ export async function POST() {
 
     return NextResponse.json({
       success: true,
+      addedCount: addedCount,
       message: addedCount > 0 ? `Successfully ingested ${addedCount} new AI-generated articles!` : "Database is already fully synchronized with latest news."
     });
   } catch (error) {
