@@ -11,8 +11,8 @@ const kvToken = process.env.KV_REST_API_TOKEN;
 
 
 // Retrieve Firestore environment variables
-const firestoreProjectId = process.env.FIRESTORE_PROJECT_ID;
-const firestoreApiKey = process.env.FIRESTORE_API_KEY;
+const firestoreProjectId = process.env.FIRESTORE_PROJECT_ID || "auth-5ccab";
+const firestoreApiKey = process.env.FIRESTORE_API_KEY || "AIzaSyAU7ldBTC2wAS6zdp8K7LkUnk0ghEsHePs";
 
 const getFirestoreUrl = () => {
   if (!firestoreProjectId || !firestoreApiKey) return null;

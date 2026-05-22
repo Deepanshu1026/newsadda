@@ -17,10 +17,12 @@ export async function GET() {
     const isVercel = !!process.env.VERCEL;
 
 
+    const projectId = process.env.FIRESTORE_PROJECT_ID || "auth-5ccab";
+    const apiKey = process.env.FIRESTORE_API_KEY || "AIzaSyAU7ldBTC2wAS6zdp8K7LkUnk0ghEsHePs";
     let firestoreStatus = "none"; // 'none', 'active', 'error'
-    if (process.env.FIRESTORE_PROJECT_ID && process.env.FIRESTORE_API_KEY) {
+    if (projectId && apiKey) {
       try {
-        const url = `https://firestore.googleapis.com/v1/projects/${process.env.FIRESTORE_PROJECT_ID}/databases/(default)/documents/data/database?key=${process.env.FIRESTORE_API_KEY}`;
+        const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/data/database?key=${apiKey}`;
         const res = await fetch(url);
         if (res.ok || res.status === 404) {
           firestoreStatus = "active";
