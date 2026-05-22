@@ -457,7 +457,7 @@ export default function AdminPanel({ onSyncComplete }) {
             <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "bold" }}>Active Feeds</div>
             <div style={{ fontSize: "0.8rem", fontWeight: "600", marginTop: "14px", color: "var(--text-primary)", display: "flex", gap: "4px", flexWrap: "wrap" }}>
               {stats.categories.map(c => (
-                <span key={c} style={{ background: "rgba(99,102,241,0.1)", padding: "2px 6px", borderRadius: "4px", fontSize: "10px", border: "1px solid rgba(99,102,241,0.2)" }}>{c}</span>
+                <span key={c} style={{ background: "rgba(15, 23, 42, 0.05)", padding: "2px 6px", borderRadius: "4px", fontSize: "10px", border: "1px solid var(--border-subtle)", color: "var(--text-secondary)" }}>{c}</span>
               ))}
             </div>
           </div>
@@ -625,11 +625,11 @@ export default function AdminPanel({ onSyncComplete }) {
       </div>
 
       {/* CARD: Premium Manually Select & Write AI Blogs */}
-      <div className="dashboard-card" style={{ borderTop: "4px solid var(--accent-purple)" }}>
+      <div className="dashboard-card" style={{ borderTop: "1px solid var(--border-subtle)" }}>
         <div className="dashboard-header">
           <div className="dashboard-title-group" style={{ flex: 1, minWidth: "250px" }}>
             <h2 className="dashboard-title">
-              Manual <span className="logo-accent" style={{ background: "linear-gradient(to right, var(--accent-purple), var(--accent-secondary))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>News Selection Hub</span>
+              Manual <span className="logo-accent" style={{ color: "var(--text-primary)" }}>News Selection Hub</span>
             </h2>
             <p className="dashboard-subtitle">
               Fetch real-time trending stories across categories. Select articles to write and save directly to Cloud Firestore.
@@ -677,9 +677,9 @@ export default function AdminPanel({ onSyncComplete }) {
                 onClick={() => setActiveCategory(cat)}
                 disabled={bulkGenerating}
                 style={activeCategory === cat ? {
-                  background: "var(--accent-purple)",
-                  borderColor: "var(--accent-purple)",
-                  boxShadow: "0 4px 12px rgba(124, 58, 237, 0.25)"
+                  background: "#0f172a",
+                  borderColor: "#0f172a",
+                  color: "#ffffff"
                 } : {}}
               >
                 {cat.charAt(0).toUpperCase() + cat.slice(1)}
@@ -742,8 +742,8 @@ export default function AdminPanel({ onSyncComplete }) {
               style={{
                 padding: "7px 14px",
                 fontSize: "0.82rem",
-                background: "var(--accent-purple)",
-                borderColor: "var(--accent-purple)",
+                background: "#0f172a",
+                borderColor: "#0f172a",
                 color: "#ffffff"
               }}
             >
@@ -756,7 +756,7 @@ export default function AdminPanel({ onSyncComplete }) {
         {searchedTerm && (
           <div style={{
             fontSize: "0.82rem",
-            color: "var(--text-muted)",
+            color: "#64748b",
             marginBottom: "16px",
             display: "flex",
             alignItems: "center",
@@ -764,11 +764,11 @@ export default function AdminPanel({ onSyncComplete }) {
           }}>
             <span>Showing search results for:</span>
             <span style={{
-              color: "var(--accent-purple)",
-              background: "rgba(124, 58, 237, 0.08)",
+              color: "#334155",
+              background: "rgba(51, 65, 85, 0.08)",
+              border: "1px solid rgba(51, 65, 85, 0.15)",
+              borderRadius: "4px",
               padding: "2px 8px",
-              borderRadius: "12px",
-              border: "1px solid rgba(124, 58, 237, 0.15)",
               fontWeight: "600"
             }}>
               "{searchedTerm}"
@@ -791,8 +791,8 @@ export default function AdminPanel({ onSyncComplete }) {
             transition: all 0.2s ease;
           }
           .queue-item-hoverable:hover {
-            background: rgba(124, 58, 237, 0.04) !important;
-            border-color: rgba(124, 58, 237, 0.2) !important;
+            background: rgba(15, 23, 42, 0.02) !important;
+            border-color: #cbd5e1 !important;
           }
         `}} />
 
@@ -816,7 +816,7 @@ export default function AdminPanel({ onSyncComplete }) {
             <div style={{ display: "flex", flexDirection: "column", gap: "12px", maxHeight: "360px", overflowY: "auto", paddingRight: "4px", border: "1px solid var(--border-subtle)", borderRadius: "12px", padding: "12px", background: "rgba(15, 23, 42, 0.01)" }}>
               {loadingHeadlines ? (
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "12px", padding: "40px 0" }}>
-                  <div className="spinner" style={{ width: "32px", height: "32px", borderWidth: "3px", borderTopColor: "var(--accent-purple)" }} />
+                  <div className="spinner" style={{ width: "32px", height: "32px", borderWidth: "3px", borderTopColor: "var(--text-primary)" }} />
                   <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: "500" }}>Fetching real-time headlines...</span>
                 </div>
               ) : headlines.length === 0 ? (
@@ -836,11 +836,11 @@ export default function AdminPanel({ onSyncComplete }) {
                         gap: "16px",
                         padding: "12px 16px",
                         borderRadius: "10px",
-                        border: isSelected ? "1px solid var(--accent-purple)" : "1px solid var(--border-subtle)",
-                        background: isSelected ? "rgba(124, 58, 237, 0.03)" : "var(--bg-surface-solid)",
+                        border: isSelected ? "1px solid #475569" : "1px solid var(--border-subtle)",
+                        background: isSelected ? "rgba(15, 23, 42, 0.03)" : "var(--bg-surface-solid)",
                         cursor: bulkGenerating ? "not-allowed" : "pointer",
                         transition: "all 0.2s ease",
-                        boxShadow: isSelected ? "0 2px 8px rgba(124, 58, 237, 0.05)" : "none"
+                        boxShadow: "none"
                       }}
                       className="headline-item"
                     >
@@ -850,8 +850,8 @@ export default function AdminPanel({ onSyncComplete }) {
                           width: "20px",
                           height: "20px",
                           borderRadius: "6px",
-                          border: isSelected ? "2px solid var(--accent-purple)" : "2px solid var(--text-muted)",
-                          background: isSelected ? "var(--accent-purple)" : "transparent",
+                          border: isSelected ? "2px solid #0f172a" : "2px solid var(--text-muted)",
+                          background: isSelected ? "#0f172a" : "transparent",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -942,13 +942,13 @@ export default function AdminPanel({ onSyncComplete }) {
               <h3 style={{ fontSize: "1.05rem", fontWeight: "700", color: "#ffffff", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
                 <span>AI Writing Queue</span>
                 <span style={{
-                  background: "var(--accent-purple)",
+                  background: "#475569",
                   color: "#ffffff",
                   fontSize: "0.72rem",
                   fontWeight: "bold",
                   padding: "2px 8px",
                   borderRadius: "12px",
-                  boxShadow: "0 2px 6px rgba(124, 58, 237, 0.3)"
+                  boxShadow: "none"
                 }}>
                   {selectedArticles.length} queued
                 </span>
@@ -1013,22 +1013,14 @@ export default function AdminPanel({ onSyncComplete }) {
                         padding: "10px 12px",
                         borderRadius: "10px",
                         border: isDragOver
-                          ? "1.5px dashed var(--accent-purple)"
-                          : isPriority
-                            ? (index === 0 ? "1.5px solid rgba(16, 185, 129, 0.4)" : "1.5px solid rgba(124, 58, 237, 0.4)")
-                            : "1px solid var(--border-subtle)",
+                          ? "1.5px dashed #475569"
+                          : "1px solid var(--border-subtle)",
                         background: isDragOver
-                          ? "rgba(124, 58, 237, 0.08)"
-                          : isPriority
-                            ? (index === 0 ? "rgba(16, 185, 129, 0.02)" : "rgba(124, 58, 237, 0.02)")
-                            : "var(--bg-surface-solid)",
+                          ? "rgba(15, 23, 42, 0.04)"
+                          : "var(--bg-surface-solid)",
                         opacity: isDragged ? 0.45 : 1,
                         transform: isDragOver ? "scale(1.02)" : "scale(1)",
-                        boxShadow: isPriority 
-                          ? (index === 0 
-                              ? "0 0 12px rgba(16, 185, 129, 0.06), inset 0 0 8px rgba(16, 185, 129, 0.02)" 
-                              : "0 0 12px rgba(124, 58, 237, 0.06), inset 0 0 8px rgba(124, 58, 237, 0.02)") 
-                          : "none",
+                        boxShadow: "none",
                         position: "relative",
                         transition: "transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.2s ease, background-color 0.2s ease, opacity 0.2s ease",
                         cursor: bulkGenerating ? "not-allowed" : "grab"
@@ -1058,24 +1050,16 @@ export default function AdminPanel({ onSyncComplete }) {
                         width: "22px",
                         height: "22px",
                         borderRadius: "50%",
-                        background: index === 0 
-                          ? "#10b981" 
-                          : isPriority 
-                            ? "var(--accent-purple)" 
-                            : "rgba(15, 23, 42, 0.05)",
-                        color: index === 0 || isPriority ? "#ffffff" : "var(--text-secondary)",
+                        background: "#f1f5f9",
+                        color: "#334155",
                         fontSize: "0.75rem",
                         fontWeight: "800",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         flexShrink: 0,
-                        border: index === 0 || isPriority ? "none" : "1px solid var(--border-subtle)",
-                        boxShadow: index === 0 
-                          ? "0 2px 6px rgba(16, 185, 129, 0.3)" 
-                          : isPriority 
-                            ? "0 2px 6px rgba(124, 58, 237, 0.3)" 
-                            : "none"
+                        border: "1px solid #cbd5e1",
+                        boxShadow: "none"
                       }}>
                         {index + 1}
                       </div>
@@ -1096,14 +1080,8 @@ export default function AdminPanel({ onSyncComplete }) {
                         <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
                           <span style={{
                             fontSize: "0.62rem",
-                            background: index === 0 
-                              ? "rgba(16, 185, 129, 0.12)" 
-                              : isPriority 
-                                ? "rgba(124, 58, 237, 0.12)" 
-                                : "rgba(124, 58, 237, 0.08)",
-                            color: index === 0 
-                              ? "#10b981" 
-                              : "var(--accent-purple)",
+                            background: "rgba(71, 85, 105, 0.08)",
+                            color: "#475569",
                             padding: "1px 6px",
                             borderRadius: "4px",
                             fontWeight: "700",
@@ -1123,16 +1101,12 @@ export default function AdminPanel({ onSyncComplete }) {
                               textTransform: "uppercase",
                               padding: "1px 5px",
                               borderRadius: "4px",
-                              background: index === 0 
-                                ? "rgba(16, 185, 129, 0.15)" 
-                                : "rgba(124, 58, 237, 0.15)",
-                              color: index === 0 ? "#10b981" : "var(--accent-purple)",
-                              border: index === 0 
-                                ? "1px solid rgba(16, 185, 129, 0.25)" 
-                                : "1px solid rgba(124, 58, 237, 0.25)",
-                              boxShadow: index === 0 ? "0 0 6px rgba(16, 185, 129, 0.1)" : "none"
+                              background: "#f8fafc",
+                              color: "#475569",
+                              border: "1px solid #cbd5e1",
+                              boxShadow: "none"
                             }}>
-                              {index === 0 ? "Generate 1st" : index === 1 ? "Generate 2nd" : "Generate 3rd"}
+                              {index === 0 ? "1st in Queue" : index === 1 ? "2nd in Queue" : "3rd in Queue"}
                             </span>
                           )}
                         </div>
@@ -1224,8 +1198,9 @@ export default function AdminPanel({ onSyncComplete }) {
                 onClick={handleBulkGenerate}
                 disabled={selectedArticles.length === 0 || bulkGenerating}
                 style={{
-                  background: "var(--accent-purple)",
-                  boxShadow: selectedArticles.length > 0 && !bulkGenerating ? "0 4px 14px rgba(124, 58, 237, 0.25)" : "none",
+                  background: "#0f172a",
+                  border: "1px solid #1e293b",
+                  boxShadow: "none",
                   width: "100%",
                   justifyContent: "center"
                 }}
@@ -1301,7 +1276,7 @@ export default function AdminPanel({ onSyncComplete }) {
       </div>
 
       {/* CARD 2: Google AdSense Monetization Hub */}
-      <div className="dashboard-card" style={{ borderTop: "4px solid var(--accent-secondary)" }}>
+      <div className="dashboard-card" style={{ borderTop: "1px solid var(--border-subtle)" }}>
         <div className="dashboard-header">
           <div className="dashboard-title-group">
             <h2 className="dashboard-title">
@@ -1344,8 +1319,8 @@ export default function AdminPanel({ onSyncComplete }) {
         </div>
 
         <div style={{
-          background: "rgba(79, 70, 229, 0.03)",
-          border: "1px dashed rgba(79, 70, 229, 0.15)",
+          background: "rgba(15, 23, 42, 0.02)",
+          border: "1px dashed var(--border-subtle)",
           padding: "20px",
           borderRadius: "12px",
           display: "flex",
@@ -1375,10 +1350,10 @@ export default function AdminPanel({ onSyncComplete }) {
               fontSize: "0.88rem",
               cursor: "pointer",
               transition: "all 0.2s ease",
-              background: forceLiveAds ? "rgba(239, 68, 68, 0.1)" : "var(--accent-primary)",
+              background: forceLiveAds ? "rgba(239, 68, 68, 0.1)" : "#0f172a",
               color: forceLiveAds ? "#ef4444" : "#ffffff",
-              border: forceLiveAds ? "1px solid rgba(239, 68, 68, 0.2)" : "none",
-              boxShadow: forceLiveAds ? "none" : "0 4px 12px rgba(79, 70, 229, 0.2)"
+              border: forceLiveAds ? "1px solid rgba(239, 68, 68, 0.2)" : "1px solid #1e293b",
+              boxShadow: "none"
             }}
           >
             {forceLiveAds ? "Disable Live Ads on Local" : "Force Live Ads on Local"}
