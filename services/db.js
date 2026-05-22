@@ -9,47 +9,51 @@ const tmpDbPath = path.join("/tmp", "database.json");
 const kvUrl = process.env.KV_REST_API_URL;
 const kvToken = process.env.KV_REST_API_TOKEN;
 
-// Retrieve Firebase Realtime Database environment variable
-const firebaseDbUrl = process.env.FIREBASE_DATABASE_URL;
 
-const getFirebaseUrl = () => {
-  if (!firebaseDbUrl) return null;
-  const baseUrl = firebaseDbUrl.endsWith("/") ? firebaseDbUrl.slice(0, -1) : firebaseDbUrl;
-  return `${baseUrl}/posts.json`;
+// Retrieve Firestore environment variables
+const firestoreProjectId = process.env.FIRESTORE_PROJECT_ID;
+const firestoreApiKey = process.env.FIRESTORE_API_KEY;
+
+const getFirestoreUrl = () => {
+  if (!firestoreProjectId || !firestoreApiKey) return null;
+  return `https://firestore.googleapis.com/v1/projects/${firestoreProjectId}/databases/(default)/documents/data/database?key=${firestoreApiKey}`;
 };
 
 /**
  * Reads the blog posts database from its source.
+ * If Cloud Firestore is connected, it retrieves posts from there.
  * If Vercel KV is connected, it retrieves the posts from the cloud store.
  * Otherwise, it falls back to /tmp/database.json, then to the local database.json file.
  */
 async function fetchDatabaseRaw() {
-  // 1. Try reading from Firebase Realtime Database if configured
-  const firebaseResUrl = getFirebaseUrl();
-  if (firebaseResUrl) {
+  // 1. Try reading from Cloud Firestore if configured
+  const firestoreResUrl = getFirestoreUrl();
+  if (firestoreResUrl) {
     try {
-      console.log("[DB Service] Firebase DB detected. Fetching database from Firebase...");
-      const res = await fetch(firebaseResUrl, { cache: "no-store" });
+      console.log("[DB Service] Cloud Firestore detected. Fetching database from Firestore...");
+      const res = await fetch(firestoreResUrl, { cache: "no-store" });
       if (res.ok) {
-        const posts = await res.json();
-        if (posts && Array.isArray(posts)) {
-          console.log(`[DB Service] Loaded ${posts.length} posts successfully from Firebase.`);
+        const doc = await res.json();
+        if (doc && doc.fields && doc.fields.postsJson && doc.fields.postsJson.stringValue) {
+          const posts = JSON.parse(doc.fields.postsJson.stringValue);
+          console.log(`[DB Service] Loaded ${posts.length} posts successfully from Cloud Firestore.`);
           return posts;
-        } else if (posts === null) {
-          console.log("[DB Service] Firebase DB is empty. Initializing with bundled database.json...");
-          const bundledPosts = await readBundledDatabase();
-          if (bundledPosts.length > 0) {
-            await writeDatabase(bundledPosts);
-          }
-          return bundledPosts;
         }
+      } else if (res.status === 404) {
+        console.log("[DB Service] Cloud Firestore document not found. Initializing with bundled database.json...");
+        const bundledPosts = await readBundledDatabase();
+        if (bundledPosts.length > 0) {
+          await writeDatabase(bundledPosts);
+        }
+        return bundledPosts;
       } else {
-        console.warn("[DB Service] Firebase DB returned error status:", res.status);
+        console.warn("[DB Service] Cloud Firestore returned error status:", res.status);
       }
     } catch (error) {
-      console.error("[DB Service] Error reading from Firebase DB, falling back:", error.message);
+      console.error("[DB Service] Error reading from Cloud Firestore, falling back:", error.message);
     }
   }
+
   // 1. Try reading from Vercel KV if connected
   if (kvUrl && kvToken) {
     try {
@@ -122,28 +126,36 @@ export const readDatabase = cache(fetchDatabaseRaw);
  * Otherwise, it writes to /tmp/database.json and the local database.json file.
  */
 export async function writeDatabase(posts) {
-  // 1. Write to Firebase Realtime Database if configured
-  const firebaseResUrl = getFirebaseUrl();
-  if (firebaseResUrl) {
+  // 1. Write to Cloud Firestore if configured
+  const firestoreResUrl = getFirestoreUrl();
+  if (firestoreResUrl) {
     try {
-      console.log("[DB Service] Writing updated database to Firebase Realtime Database...");
-      const res = await fetch(firebaseResUrl, {
-        method: "PUT",
+      console.log("[DB Service] Writing updated database to Cloud Firestore...");
+      const payload = {
+        fields: {
+          postsJson: {
+            stringValue: JSON.stringify(posts)
+          }
+        }
+      };
+      const res = await fetch(firestoreResUrl + "&updateMask.fieldPaths=postsJson", {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(posts),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
-        console.log("[DB Service] Successfully saved database to Firebase Realtime Database.");
+        console.log("[DB Service] Successfully saved database to Cloud Firestore.");
       } else {
-        console.warn("[DB Service] Firebase Realtime Database write failed with status:", res.status);
+        console.warn("[DB Service] Cloud Firestore write failed with status:", res.status);
       }
     } catch (error) {
-      console.error("[DB Service] Error writing to Firebase Realtime Database:", error.message);
+      console.error("[DB Service] Error writing to Cloud Firestore:", error.message);
     }
   }
+
 
   // 2. Write to Vercel KV if connected
   if (kvUrl && kvToken) {

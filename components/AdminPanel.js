@@ -139,22 +139,22 @@ export default function AdminPanel({ onSyncComplete }) {
               <span>Dev Cron Daemon: {stats.cronActive ? "Active" : "Offline"}</span>
             </div>
             <div className="sync-status-indicator" style={{
-              background: stats.firebaseStatus && stats.firebaseStatus !== "none"
-                ? (stats.firebaseStatus === "active" ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)")
+              background: stats.firestoreStatus && stats.firestoreStatus !== "none"
+                ? (stats.firestoreStatus === "active" ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)")
                 : (stats.isKvConnected 
                   ? "rgba(16, 185, 129, 0.1)" 
                   : stats.isVercel 
                     ? "rgba(245, 158, 11, 0.1)" 
                     : "rgba(99, 102, 241, 0.1)"),
-              border: stats.firebaseStatus && stats.firebaseStatus !== "none"
-                ? (stats.firebaseStatus === "active" ? "1px solid rgba(16, 185, 129, 0.2)" : "1px solid rgba(239, 68, 68, 0.2)")
+              border: stats.firestoreStatus && stats.firestoreStatus !== "none"
+                ? (stats.firestoreStatus === "active" ? "1px solid rgba(16, 185, 129, 0.2)" : "1px solid rgba(239, 68, 68, 0.2)")
                 : (stats.isKvConnected 
                   ? "1px solid rgba(16, 185, 129, 0.2)" 
                   : stats.isVercel 
                     ? "1px solid rgba(245, 158, 11, 0.2)" 
                     : "1px solid rgba(99, 102, 241, 0.2)"),
-              color: stats.firebaseStatus && stats.firebaseStatus !== "none"
-                ? (stats.firebaseStatus === "active" ? "#10b981" : "#ef4444")
+              color: stats.firestoreStatus && stats.firestoreStatus !== "none"
+                ? (stats.firestoreStatus === "active" ? "#10b981" : "#ef4444")
                 : (stats.isKvConnected 
                   ? "#10b981" 
                   : stats.isVercel 
@@ -162,15 +162,15 @@ export default function AdminPanel({ onSyncComplete }) {
                     : "var(--accent-primary)")
             }}>
               <div className="status-dot" style={{
-                backgroundColor: stats.firebaseStatus && stats.firebaseStatus !== "none"
-                  ? (stats.firebaseStatus === "active" ? "#10b981" : "#ef4444")
+                backgroundColor: stats.firestoreStatus && stats.firestoreStatus !== "none"
+                  ? (stats.firestoreStatus === "active" ? "#10b981" : "#ef4444")
                   : (stats.isKvConnected 
                     ? "#10b981" 
                     : stats.isVercel 
                       ? "#f59e0b" 
                       : "var(--accent-primary)"),
-                boxShadow: stats.firebaseStatus && stats.firebaseStatus !== "none"
-                  ? (stats.firebaseStatus === "active" ? "0 0 8px #10b981" : "0 0 8px #ef4444")
+                boxShadow: stats.firestoreStatus && stats.firestoreStatus !== "none"
+                  ? (stats.firestoreStatus === "active" ? "0 0 8px #10b981" : "0 0 8px #ef4444")
                   : (stats.isKvConnected 
                     ? "0 0 8px #10b981" 
                     : stats.isVercel 
@@ -178,12 +178,10 @@ export default function AdminPanel({ onSyncComplete }) {
                       : "0 0 8px var(--accent-primary)")
               }} />
               <span>
-                {stats.firebaseStatus && stats.firebaseStatus !== "none"
-                  ? (stats.firebaseStatus === "active"
-                    ? "DB: Persistent (Firebase RTDB)"
-                    : stats.firebaseStatus === "deactivated"
-                      ? "DB: Firebase Deactivated"
-                      : "DB: Firebase Error")
+                {stats.firestoreStatus && stats.firestoreStatus !== "none"
+                  ? (stats.firestoreStatus === "active"
+                    ? "DB: Persistent (Firestore)"
+                    : "DB: Firestore Error")
                   : (stats.isKvConnected 
                     ? "DB: Persistent (Vercel KV)" 
                     : stats.isVercel 
@@ -220,7 +218,7 @@ export default function AdminPanel({ onSyncComplete }) {
           </div>
         </div>
 
-        {stats.firebaseStatus === "deactivated" && (
+        {stats.firestoreStatus === "error" && (
           <div style={{
             background: "rgba(239, 68, 68, 0.05)",
             border: "1px dashed rgba(239, 68, 68, 0.2)",
@@ -237,58 +235,16 @@ export default function AdminPanel({ onSyncComplete }) {
                 <line x1="12" y1="9" x2="12" y2="13" />
                 <line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
-              <span>Firebase Realtime Database Deactivated!</span>
+              <span>Cloud Firestore Connection Error</span>
             </div>
             <p style={{ margin: 0, fontSize: "0.83rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
-              Your Firebase Realtime Database is currently <strong>Deactivated/Locked</strong> by Google/Firebase due to inactivity. 
-              Newly synced articles are currently failing to save to the cloud, and the system is falling back to temporary or local storage.
-            </p>
-            <div style={{
-              background: "#08090d",
-              border: "1px solid var(--border-subtle)",
-              borderRadius: "8px",
-              padding: "12px",
-              marginTop: "4px",
-              fontSize: "0.78rem"
-            }}>
-              <strong style={{ color: "var(--text-primary)", display: "block", marginBottom: "4px" }}>How to Reactivate (1-Minute Fix):</strong>
-              <ol style={{ margin: 0, paddingLeft: "16px", display: "flex", flexDirection: "column", gap: "4px", color: "var(--text-secondary)" }}>
-                <li>Go to the <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent-primary)", textDecoration: "underline", fontWeight: "bold" }}>Firebase Console</a> &rarr; select project <strong>auth-5ccab</strong>.</li>
-                <li>In the left sidebar, expand <strong>Build</strong> and click on <strong>Realtime Database</strong>.</li>
-                <li>At the top of the page, click the prominent banner's <strong>Reactivate</strong> button.</li>
-                <li>Your database will be restored instantly!</li>
-              </ol>
-            </div>
-          </div>
-        )}
-
-        {stats.firebaseStatus === "error" && (
-          <div style={{
-            background: "rgba(239, 68, 68, 0.05)",
-            border: "1px dashed rgba(239, 68, 68, 0.2)",
-            borderRadius: "12px",
-            padding: "16px 20px",
-            marginTop: "16px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "8px"
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#ef4444", fontWeight: "700", fontSize: "0.95rem" }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                <line x1="12" y1="9" x2="12" y2="13" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
-              <span>Firebase Realtime Database Connection Error</span>
-            </div>
-            <p style={{ margin: 0, fontSize: "0.83rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
-              The application encountered a connection error while trying to communicate with Firebase. Please verify that your 
-              Firebase rules allow public read/write access (e.g., <code>{`{ "rules": { ".read": true, ".write": true } }`}</code>) or that the configured database URL is correct.
+              Unable to connect to Cloud Firestore. Please verify your <strong>FIRESTORE_PROJECT_ID</strong> and <strong>FIRESTORE_API_KEY</strong> environment variables, 
+              and make sure your Firestore Security Rules allow public read/write access (e.g. <code>allow read, write: if true;</code>).
             </p>
           </div>
         )}
 
-        {stats.firebaseStatus === "active" && (
+        {stats.firestoreStatus === "active" && (
           <div style={{
             background: "rgba(16, 185, 129, 0.05)",
             border: "1px dashed rgba(16, 185, 129, 0.2)",
@@ -304,12 +260,13 @@ export default function AdminPanel({ onSyncComplete }) {
               <polyline points="22 4 12 14.01 9 11.01" />
             </svg>
             <span style={{ fontSize: "0.83rem", color: "var(--text-secondary)", lineHeight: "1.4" }}>
-              <strong style={{ color: "#10b981" }}>Cloud Persistence Active</strong>: Your database is safely connected to your <strong>Firebase Realtime Database</strong>. All articles are securely saved in the cloud and will remain persistent indefinitely.
+              <strong style={{ color: "#10b981" }}>Cloud Firestore Persistence Active</strong>: Your database is successfully connected to <strong>Google Cloud Firestore</strong>. All articles are securely saved in the cloud and will remain persistent indefinitely.
             </span>
           </div>
         )}
 
-        {(!stats.firebaseStatus || stats.firebaseStatus === "none") && stats.isVercel && !stats.isKvConnected && (
+
+        {(!stats.firestoreStatus || stats.firestoreStatus === "none") && stats.isVercel && !stats.isKvConnected && (
           <div style={{
             background: "rgba(245, 158, 11, 0.05)",
             border: "1px dashed rgba(245, 158, 11, 0.2)",
@@ -350,7 +307,7 @@ export default function AdminPanel({ onSyncComplete }) {
           </div>
         )}
 
-        {(!stats.firebaseStatus || stats.firebaseStatus === "none") && stats.isKvConnected && (
+        {(!stats.firestoreStatus || stats.firestoreStatus === "none") && stats.isKvConnected && (
           <div style={{
             background: "rgba(16, 185, 129, 0.05)",
             border: "1px dashed rgba(16, 185, 129, 0.2)",

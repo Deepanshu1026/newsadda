@@ -16,20 +16,19 @@ export async function GET() {
     const isKvConnected = !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
     const isVercel = !!process.env.VERCEL;
 
-    let firebaseStatus = "none"; // 'none', 'active', 'deactivated', 'error'
-    if (process.env.FIREBASE_DATABASE_URL) {
+
+    let firestoreStatus = "none"; // 'none', 'active', 'error'
+    if (process.env.FIRESTORE_PROJECT_ID && process.env.FIRESTORE_API_KEY) {
       try {
-        const baseUrl = process.env.FIREBASE_DATABASE_URL.endsWith("/") ? process.env.FIREBASE_DATABASE_URL.slice(0, -1) : process.env.FIREBASE_DATABASE_URL;
-        const res = await fetch(`${baseUrl}/posts.json`);
-        if (res.status === 423) {
-          firebaseStatus = "deactivated";
-        } else if (res.ok) {
-          firebaseStatus = "active";
+        const url = `https://firestore.googleapis.com/v1/projects/${process.env.FIRESTORE_PROJECT_ID}/databases/(default)/documents/data/database?key=${process.env.FIRESTORE_API_KEY}`;
+        const res = await fetch(url);
+        if (res.ok || res.status === 404) {
+          firestoreStatus = "active";
         } else {
-          firebaseStatus = "error";
+          firestoreStatus = "error";
         }
       } catch (e) {
-        firebaseStatus = "error";
+        firestoreStatus = "error";
       }
     }
 
@@ -41,7 +40,8 @@ export async function GET() {
       categories,
       isKvConnected,
       isVercel,
-      firebaseStatus
+
+      firestoreStatus
     });
   } catch (error) {
     console.error("[Cron API] Error rendering status:", error);
