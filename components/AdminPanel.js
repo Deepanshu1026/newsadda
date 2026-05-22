@@ -22,6 +22,7 @@ export default function AdminPanel({ onSyncComplete }) {
   const [headlines, setHeadlines] = useState([]);
   const [loadingHeadlines, setLoadingHeadlines] = useState(false);
   const [selectedArticles, setSelectedArticles] = useState([]);
+  const [isQueueLoaded, setIsQueueLoaded] = useState(false);
   const [bulkGenerating, setBulkGenerating] = useState(false);
   const [bulkLogs, setBulkLogs] = useState([]);
   const [bulkStatus, setBulkStatus] = useState("");
@@ -30,12 +31,82 @@ export default function AdminPanel({ onSyncComplete }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchedTerm, setSearchedTerm] = useState("");
 
+  // Drag and Drop States
+  const [draggedIndex, setDraggedIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
+
+  // Load selection queue from localStorage on initial mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("newsadda_manual_queue");
+      if (saved) {
+        try {
+          setSelectedArticles(JSON.parse(saved));
+        } catch (e) {
+          console.error("Failed to parse saved queue:", e);
+        }
+      }
+      setIsQueueLoaded(true);
+    }
+  }, []);
+
+  // Save selection queue to localStorage only after it has been loaded
+  useEffect(() => {
+    if (isQueueLoaded && typeof window !== "undefined") {
+      localStorage.setItem("newsadda_manual_queue", JSON.stringify(selectedArticles));
+    }
+  }, [selectedArticles, isQueueLoaded]);
+
+  const handleDragStart = (e, index) => {
+    setDraggedIndex(index);
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = "move";
+      try {
+        e.dataTransfer.setData("text/plain", index.toString());
+      } catch (err) {
+        console.warn("dataTransfer error:", err);
+      }
+    }
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    if (dragOverIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = (e, index) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    const newQueue = [...selectedArticles];
+    const draggedItem = newQueue[draggedIndex];
+    
+    // Remove from original slot
+    newQueue.splice(draggedIndex, 1);
+    // Insert into target slot
+    newQueue.splice(index, 0, draggedItem);
+    
+    setSelectedArticles(newQueue);
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
   const fetchTrendingHeadlines = async (cat, force = false, isSearch = false) => {
     const canCache = !isSearch;
 
     if (!force && canCache && cachedHeadlines[cat]) {
       setHeadlines(cachedHeadlines[cat]);
-      setSelectedArticles([]);
       return;
     }
 
@@ -52,7 +123,6 @@ export default function AdminPanel({ onSyncComplete }) {
             [cat]: categoryHeadlines
           }));
         }
-        setSelectedArticles([]);
       } else {
         console.error("Failed to fetch headlines");
       }
@@ -87,19 +157,53 @@ export default function AdminPanel({ onSyncComplete }) {
     setActiveCategory("politics");
   };
 
-  const handleToggleSelect = (title) => {
-    setSelectedArticles(prev => 
-      prev.includes(title) 
-        ? prev.filter(t => t !== title) 
-        : [...prev, title]
-    );
+  const moveArticleInQueue = (index, direction) => {
+    const newQueue = [...selectedArticles];
+    if (direction === "up" && index > 0) {
+      const temp = newQueue[index];
+      newQueue[index] = newQueue[index - 1];
+      newQueue[index - 1] = temp;
+    } else if (direction === "down" && index < newQueue.length - 1) {
+      const temp = newQueue[index];
+      newQueue[index] = newQueue[index + 1];
+      newQueue[index + 1] = temp;
+    }
+    setSelectedArticles(newQueue);
+  };
+
+  const handleToggleSelect = (headline) => {
+    setSelectedArticles(prev => {
+      const exists = prev.some(a => a.title === headline.title);
+      if (exists) {
+        return prev.filter(a => a.title !== headline.title);
+      } else {
+        return [...prev, {
+          title: headline.title,
+          description: headline.description || "Latest automated trending update.",
+          category: activeCategory || searchedTerm || "News",
+          image: headline.image,
+          author: headline.author || "NewsAdda India Desk"
+        }];
+      }
+    });
   };
 
   const handleToggleSelectAll = () => {
-    if (selectedArticles.length === headlines.length) {
-      setSelectedArticles([]);
+    const allCurrentSelected = headlines.length > 0 && headlines.every(h => selectedArticles.some(a => a.title === h.title));
+    if (allCurrentSelected) {
+      setSelectedArticles(prev => prev.filter(a => !headlines.some(h => h.title === a.title)));
     } else {
-      setSelectedArticles(headlines.map(h => h.title));
+      setSelectedArticles(prev => {
+        const newItems = headlines.filter(h => !prev.some(a => a.title === h.title))
+          .map(h => ({
+            title: h.title,
+            description: h.description || "Latest automated trending update.",
+            category: activeCategory || searchedTerm || "News",
+            image: h.image,
+            author: h.author || "NewsAdda India Desk"
+          }));
+        return [...prev, ...newItems];
+      });
     }
   };
 
@@ -111,16 +215,7 @@ export default function AdminPanel({ onSyncComplete }) {
     setBulkLogs(["[System] Starting manual bulk generation for " + selectedArticles.length + " article(s)..."]);
     
     try {
-      const articlesToSend = selectedArticles.map(title => {
-        const found = headlines.find(h => h.title === title);
-        return {
-          title: found.title,
-          description: found.description,
-          category: activeCategory || searchedTerm || "News",
-          image: found.image,
-          author: found.author
-        };
-      });
+      const articlesToSend = selectedArticles;
 
       setBulkLogs(prev => [...prev, "[News Client] Packaging selected headlines..."]);
       await new Promise(resolve => setTimeout(resolve, 300));
@@ -681,172 +776,528 @@ export default function AdminPanel({ onSyncComplete }) {
           </div>
         )}
 
-        {/* Headlines List Grid */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px", maxHeight: "360px", overflowY: "auto", paddingRight: "4px", border: "1px solid var(--border-subtle)", borderRadius: "12px", padding: "12px", background: "rgba(15, 23, 42, 0.01)" }}>
-          {loadingHeadlines ? (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "12px", padding: "40px 0" }}>
-              <div className="spinner" style={{ width: "32px", height: "32px", borderWidth: "3px", borderTopColor: "var(--accent-purple)" }} />
-              <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: "500" }}>Fetching real-time headlines...</span>
-            </div>
-          ) : headlines.length === 0 ? (
-            <div style={{ padding: "32px 0", textAlign: "center", color: "var(--text-muted)", fontSize: "0.9rem" }}>
-              No recent headlines found for {activeCategory ? `category "${activeCategory}"` : `query "${searchedTerm}"`}.
-            </div>
-          ) : (
-            headlines.map((headline) => {
-              const isSelected = selectedArticles.includes(headline.title);
-              return (
-                <div
-                  key={headline.title}
-                  onClick={() => !bulkGenerating && handleToggleSelect(headline.title)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "16px",
-                    padding: "12px 16px",
-                    borderRadius: "10px",
-                    border: isSelected ? "1px solid var(--accent-purple)" : "1px solid var(--border-subtle)",
-                    background: isSelected ? "rgba(124, 58, 237, 0.03)" : "var(--bg-surface-solid)",
-                    cursor: bulkGenerating ? "not-allowed" : "pointer",
-                    transition: "all 0.2s ease",
-                    boxShadow: isSelected ? "0 2px 8px rgba(124, 58, 237, 0.05)" : "none"
-                  }}
-                  className="headline-item"
-                >
-                  {/* custom checkbox */}
-                  <div
-                    style={{
-                      width: "20px",
-                      height: "20px",
-                      borderRadius: "6px",
-                      border: isSelected ? "2px solid var(--accent-purple)" : "2px solid var(--text-muted)",
-                      background: isSelected ? "var(--accent-purple)" : "transparent",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      transition: "all 0.15s ease",
-                      flexShrink: 0
-                    }}
-                  >
-                    {isSelected && (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    )}
-                  </div>
+        {/* CSS Media Rules for Queue Column wrapping on smaller viewports */}
+        <style dangerouslySetInnerHTML={{__html: `
+          @media (max-width: 991px) {
+            .admin-queue-section {
+              border-left: none !important;
+              padding-left: 0 !important;
+              border-top: 1px dashed var(--border-subtle);
+              padding-top: 24px;
+              margin-top: 8px;
+            }
+          }
+          .queue-item-hoverable {
+            transition: all 0.2s ease;
+          }
+          .queue-item-hoverable:hover {
+            background: rgba(124, 58, 237, 0.04) !important;
+            border-color: rgba(124, 58, 237, 0.2) !important;
+          }
+        `}} />
 
-                  {/* Thumbnail / Source Image */}
-                  {headline.image && (
-                    <img
-                      src={headline.image}
-                      alt=""
-                      style={{
-                        width: "50px",
-                        height: "50px",
-                        borderRadius: "8px",
-                        objectFit: "cover",
-                        border: "1px solid var(--border-subtle)",
-                        flexShrink: 0
-                      }}
-                    />
-                  )}
-
-                  {/* Text Details */}
-                  <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px", minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                      <span style={{ fontSize: "0.72rem", background: "rgba(15, 23, 42, 0.05)", padding: "2px 6px", borderRadius: "4px", fontWeight: "600", color: "var(--text-secondary)" }}>
-                        {headline.source || "News Desk"}
-                      </span>
-                      <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>
-                        {new Date(headline.publishedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-                      </span>
-                    </div>
-                    <h4 style={{ fontSize: "0.88rem", fontWeight: "600", color: "var(--text-primary)", margin: 0, textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
-                      {headline.title}
-                    </h4>
-                    <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", margin: 0, textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
-                      {headline.description || "Latest trending headline update."}
-                    </p>
-                  </div>
+        {/* Premium Selection Split-Screen Layout */}
+        <div style={{
+          display: "flex",
+          flexDirection: "row",
+          flexWrap: "wrap",
+          gap: "28px",
+          marginTop: "16px"
+        }}>
+          {/* Left Column: Source Feed Checklist */}
+          <div style={{
+            flex: "1 1 500px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "14px",
+            minWidth: 0
+          }}>
+            {/* Headlines List Grid */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px", maxHeight: "360px", overflowY: "auto", paddingRight: "4px", border: "1px solid var(--border-subtle)", borderRadius: "12px", padding: "12px", background: "rgba(15, 23, 42, 0.01)" }}>
+              {loadingHeadlines ? (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "12px", padding: "40px 0" }}>
+                  <div className="spinner" style={{ width: "32px", height: "32px", borderWidth: "3px", borderTopColor: "var(--accent-purple)" }} />
+                  <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: "500" }}>Fetching real-time headlines...</span>
                 </div>
-              );
-            })
-          )}
-        </div>
+              ) : headlines.length === 0 ? (
+                <div style={{ padding: "32px 0", textAlign: "center", color: "var(--text-muted)", fontSize: "0.9rem" }}>
+                  No recent headlines found for {activeCategory ? `category "${activeCategory}"` : `query "${searchedTerm}"`}.
+                </div>
+              ) : (
+                headlines.map((headline) => {
+                  const isSelected = selectedArticles.some(a => a.title === headline.title);
+                  return (
+                    <div
+                      key={headline.title}
+                      onClick={() => !bulkGenerating && handleToggleSelect(headline)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "16px",
+                        padding: "12px 16px",
+                        borderRadius: "10px",
+                        border: isSelected ? "1px solid var(--accent-purple)" : "1px solid var(--border-subtle)",
+                        background: isSelected ? "rgba(124, 58, 237, 0.03)" : "var(--bg-surface-solid)",
+                        cursor: bulkGenerating ? "not-allowed" : "pointer",
+                        transition: "all 0.2s ease",
+                        boxShadow: isSelected ? "0 2px 8px rgba(124, 58, 237, 0.05)" : "none"
+                      }}
+                      className="headline-item"
+                    >
+                      {/* custom checkbox */}
+                      <div
+                        style={{
+                          width: "20px",
+                          height: "20px",
+                          borderRadius: "6px",
+                          border: isSelected ? "2px solid var(--accent-purple)" : "2px solid var(--text-muted)",
+                          background: isSelected ? "var(--accent-purple)" : "transparent",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          transition: "all 0.15s ease",
+                          flexShrink: 0
+                        }}
+                      >
+                        {isSelected && (
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        )}
+                      </div>
 
-        {/* Toolbar & Actions */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <button
-              className="btn-secondary"
-              onClick={handleToggleSelectAll}
-              disabled={loadingHeadlines || headlines.length === 0 || bulkGenerating}
-              style={{ padding: "8px 14px", fontSize: "0.82rem" }}
-            >
-              {selectedArticles.length === headlines.length && headlines.length > 0 ? "Deselect All" : "Select All"}
-            </button>
-            <span style={{ fontSize: "0.82rem", color: "var(--text-muted)", fontWeight: "500" }}>
-              {selectedArticles.length} of {headlines.length} headlines selected
-            </span>
+                      {/* Thumbnail / Source Image */}
+                      {headline.image && (
+                        <img
+                          src={headline.image}
+                          alt=""
+                          style={{
+                            width: "50px",
+                            height: "50px",
+                            borderRadius: "8px",
+                            objectFit: "cover",
+                            border: "1px solid var(--border-subtle)",
+                            flexShrink: 0
+                          }}
+                        />
+                      )}
+
+                      {/* Text Details */}
+                      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px", minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                          <span style={{ fontSize: "0.72rem", background: "rgba(15, 23, 42, 0.05)", padding: "2px 6px", borderRadius: "4px", fontWeight: "600", color: "var(--text-secondary)" }}>
+                            {headline.source || "News Desk"}
+                          </span>
+                          <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>
+                            {new Date(headline.publishedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                          </span>
+                        </div>
+                        <h4 style={{ fontSize: "0.88rem", fontWeight: "600", color: "var(--text-primary)", margin: 0, textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                          {headline.title}
+                        </h4>
+                        <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", margin: 0, textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                          {headline.description || "Latest trending headline update."}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Left Column Feed Toolbar */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginTop: "4px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={handleToggleSelectAll}
+                  disabled={loadingHeadlines || headlines.length === 0 || bulkGenerating}
+                  style={{ padding: "8px 14px", fontSize: "0.82rem" }}
+                >
+                  {headlines.length > 0 && headlines.every(h => selectedArticles.some(a => a.title === h.title)) ? "Deselect All Current" : "Select All Current"}
+                </button>
+                <span style={{ fontSize: "0.82rem", color: "var(--text-muted)", fontWeight: "500" }}>
+                  {headlines.filter(h => selectedArticles.some(a => a.title === h.title)).length} of {headlines.length} selected in this category
+                </span>
+              </div>
+            </div>
           </div>
 
-          <button
-            className="btn-primary"
-            onClick={handleBulkGenerate}
-            disabled={selectedArticles.length === 0 || bulkGenerating}
+          {/* Right Column: AI Generation Queue */}
+          <div
+            className="admin-queue-section"
             style={{
-              background: "var(--accent-purple)",
-              boxShadow: selectedArticles.length > 0 && !bulkGenerating ? "0 4px 14px rgba(124, 58, 237, 0.25)" : "none"
-            }}
-          >
-            {bulkGenerating ? (
-              <>
-                <div className="spinner" style={{ width: "16px", height: "16px", borderWidth: "2px", borderTopColor: "#ffffff" }} />
-                <span>Writing AI Blogs...</span>
-              </>
-            ) : (
-              <>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                </svg>
-                <span>Write AI Blogs for Selected ({selectedArticles.length})</span>
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* Bulk Generation Logger */}
-        {(bulkLogs.length > 0 || bulkStatus) && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            {bulkStatus && (
-              <span style={{ fontSize: "0.82rem", color: "var(--text-secondary)", fontStyle: "italic" }}>
-                Status: {bulkStatus}
-              </span>
-            )}
-            <div style={{
-              background: "#08090d",
-              border: "1px solid var(--border-subtle)",
-              borderRadius: "10px",
-              padding: "12px 16px",
-              maxHeight: "150px",
-              overflowY: "auto",
-              fontFamily: "monospace",
-              fontSize: "0.78rem",
-              color: "var(--text-secondary)",
+              flex: "1 1 340px",
               display: "flex",
               flexDirection: "column",
-              gap: "4px"
-            }}>
-              {bulkLogs.map((log, index) => (
-                <div key={index} style={{
-                  color: log.startsWith("[Error]") ? "#ef4444" : log.startsWith("[Firestore]") || log.startsWith("[System] Bulk generation completed") ? "#10b981" : "inherit"
+              gap: "14px",
+              minWidth: 0,
+              borderLeft: "1px solid var(--border-subtle)",
+              paddingLeft: "28px"
+            }}
+          >
+            {/* Queue Title Block */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+              <h3 style={{ fontSize: "1.05rem", fontWeight: "700", color: "#ffffff", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
+                <span>AI Writing Queue</span>
+                <span style={{
+                  background: "var(--accent-purple)",
+                  color: "#ffffff",
+                  fontSize: "0.72rem",
+                  fontWeight: "bold",
+                  padding: "2px 8px",
+                  borderRadius: "12px",
+                  boxShadow: "0 2px 6px rgba(124, 58, 237, 0.3)"
                 }}>
-                  {log}
-                </div>
-              ))}
+                  {selectedArticles.length} queued
+                </span>
+              </h3>
+              <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", margin: 0, lineHeight: "1.4" }}>
+                Select stories from multiple categories to build your queue. Reorder priorities below before triggering Sarvam AI.
+              </p>
             </div>
+
+            {/* Queue scrollbox */}
+            <div style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
+              maxHeight: "360px",
+              overflowY: "auto",
+              paddingRight: "4px",
+              border: "1px solid var(--border-subtle)",
+              borderRadius: "12px",
+              padding: "10px",
+              background: "rgba(15, 23, 42, 0.01)"
+            }}>
+              {selectedArticles.length === 0 ? (
+                <div style={{
+                  padding: "48px 12px",
+                  textAlign: "center",
+                  color: "var(--text-muted)",
+                  fontSize: "0.82rem",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "10px"
+                }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" style={{ opacity: 0.5 }}>
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                  </svg>
+                  <span>Queue is empty. Toggle story checkboxes on the left to add them across categories!</span>
+                </div>
+              ) : (
+                selectedArticles.map((article, index) => {
+                  const isDragged = draggedIndex === index;
+                  const isDragOver = dragOverIndex === index;
+                  const isPriority = index < 3;
+                  
+                  return (
+                    <div
+                      key={`${article.title}-${index}`}
+                      className="queue-item-hoverable"
+                      draggable={!bulkGenerating}
+                      onDragStart={(e) => handleDragStart(e, index)}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDragEnd={handleDragEnd}
+                      onDrop={(e) => handleDrop(e, index)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px",
+                        padding: "10px 12px",
+                        borderRadius: "10px",
+                        border: isDragOver
+                          ? "1.5px dashed var(--accent-purple)"
+                          : isPriority
+                            ? (index === 0 ? "1.5px solid rgba(16, 185, 129, 0.4)" : "1.5px solid rgba(124, 58, 237, 0.4)")
+                            : "1px solid var(--border-subtle)",
+                        background: isDragOver
+                          ? "rgba(124, 58, 237, 0.08)"
+                          : isPriority
+                            ? (index === 0 ? "rgba(16, 185, 129, 0.02)" : "rgba(124, 58, 237, 0.02)")
+                            : "var(--bg-surface-solid)",
+                        opacity: isDragged ? 0.45 : 1,
+                        transform: isDragOver ? "scale(1.02)" : "scale(1)",
+                        boxShadow: isPriority 
+                          ? (index === 0 
+                              ? "0 0 12px rgba(16, 185, 129, 0.06), inset 0 0 8px rgba(16, 185, 129, 0.02)" 
+                              : "0 0 12px rgba(124, 58, 237, 0.06), inset 0 0 8px rgba(124, 58, 237, 0.02)") 
+                          : "none",
+                        position: "relative",
+                        transition: "transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.2s ease, background-color 0.2s ease, opacity 0.2s ease",
+                        cursor: bulkGenerating ? "not-allowed" : "grab"
+                      }}
+                    >
+                      {/* Drag Handle */}
+                      {!bulkGenerating && (
+                        <div style={{
+                          color: "var(--text-muted)",
+                          fontSize: "1.1rem",
+                          fontWeight: "bold",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: "grab",
+                          userSelect: "none",
+                          paddingRight: "2px",
+                          letterSpacing: "-1px",
+                          opacity: 0.7
+                        }} title="Drag to reorder">
+                          ⋮⋮
+                        </div>
+                      )}
+
+                      {/* Queue number badge */}
+                      <div style={{
+                        width: "22px",
+                        height: "22px",
+                        borderRadius: "50%",
+                        background: index === 0 
+                          ? "#10b981" 
+                          : isPriority 
+                            ? "var(--accent-purple)" 
+                            : "rgba(15, 23, 42, 0.05)",
+                        color: index === 0 || isPriority ? "#ffffff" : "var(--text-secondary)",
+                        fontSize: "0.75rem",
+                        fontWeight: "800",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                        border: index === 0 || isPriority ? "none" : "1px solid var(--border-subtle)",
+                        boxShadow: index === 0 
+                          ? "0 2px 6px rgba(16, 185, 129, 0.3)" 
+                          : isPriority 
+                            ? "0 2px 6px rgba(124, 58, 237, 0.3)" 
+                            : "none"
+                      }}>
+                        {index + 1}
+                      </div>
+
+                      {/* Details */}
+                      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "2px" }}>
+                        <h4 style={{
+                          fontSize: "0.82rem",
+                          fontWeight: "600",
+                          color: "var(--text-primary)",
+                          margin: 0,
+                          textOverflow: "ellipsis",
+                          overflow: "hidden",
+                          whiteSpace: "nowrap"
+                        }} title={article.title}>
+                          {article.title}
+                        </h4>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                          <span style={{
+                            fontSize: "0.62rem",
+                            background: index === 0 
+                              ? "rgba(16, 185, 129, 0.12)" 
+                              : isPriority 
+                                ? "rgba(124, 58, 237, 0.12)" 
+                                : "rgba(124, 58, 237, 0.08)",
+                            color: index === 0 
+                              ? "#10b981" 
+                              : "var(--accent-purple)",
+                            padding: "1px 6px",
+                            borderRadius: "4px",
+                            fontWeight: "700",
+                            textTransform: "capitalize"
+                          }}>
+                            {article.category}
+                          </span>
+                          <span style={{ fontSize: "0.62rem", color: "var(--text-muted)", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                            {article.source || "News Desk"}
+                          </span>
+                          
+                          {/* Premium Glowing Priority Labels */}
+                          {isPriority && (
+                            <span style={{
+                              fontSize: "0.6rem",
+                              fontWeight: "800",
+                              textTransform: "uppercase",
+                              padding: "1px 5px",
+                              borderRadius: "4px",
+                              background: index === 0 
+                                ? "rgba(16, 185, 129, 0.15)" 
+                                : "rgba(124, 58, 237, 0.15)",
+                              color: index === 0 ? "#10b981" : "var(--accent-purple)",
+                              border: index === 0 
+                                ? "1px solid rgba(16, 185, 129, 0.25)" 
+                                : "1px solid rgba(124, 58, 237, 0.25)",
+                              boxShadow: index === 0 ? "0 0 6px rgba(16, 185, 129, 0.1)" : "none"
+                            }}>
+                              {index === 0 ? "Generate 1st" : index === 1 ? "Generate 2nd" : "Generate 3rd"}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Controls */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "3px", flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={() => moveArticleInQueue(index, "up")}
+                          disabled={index === 0 || bulkGenerating}
+                          style={{
+                            background: "none",
+                            border: "none",
+                            cursor: index === 0 || bulkGenerating ? "not-allowed" : "pointer",
+                            color: index === 0 ? "var(--border-subtle)" : "var(--text-secondary)",
+                            padding: "4px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderRadius: "4px",
+                            transition: "background 0.2s ease"
+                          }}
+                          title="Move Up"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                            <polyline points="18 15 12 9 6 15" />
+                          </svg>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => moveArticleInQueue(index, "down")}
+                          disabled={index === selectedArticles.length - 1 || bulkGenerating}
+                          style={{
+                            background: "none",
+                            border: "none",
+                            cursor: index === selectedArticles.length - 1 || bulkGenerating ? "not-allowed" : "pointer",
+                            color: index === selectedArticles.length - 1 ? "var(--border-subtle)" : "var(--text-secondary)",
+                            padding: "4px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderRadius: "4px",
+                            transition: "background 0.2s ease"
+                          }}
+                          title="Move Down"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                            <polyline points="6 9 12 15 18 9" />
+                          </svg>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setSelectedArticles(prev => prev.filter((_, i) => i !== index))}
+                          disabled={bulkGenerating}
+                          style={{
+                            background: "none",
+                            border: "none",
+                            cursor: bulkGenerating ? "not-allowed" : "pointer",
+                            color: "#ef4444",
+                            padding: "4px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderRadius: "4px",
+                            marginLeft: "1px",
+                            transition: "background 0.2s ease"
+                          }}
+                          title="Remove from queue"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Queue triggers */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "4px" }}>
+              <button
+                className="btn-primary"
+                onClick={handleBulkGenerate}
+                disabled={selectedArticles.length === 0 || bulkGenerating}
+                style={{
+                  background: "var(--accent-purple)",
+                  boxShadow: selectedArticles.length > 0 && !bulkGenerating ? "0 4px 14px rgba(124, 58, 237, 0.25)" : "none",
+                  width: "100%",
+                  justifyContent: "center"
+                }}
+              >
+                {bulkGenerating ? (
+                  <>
+                    <div className="spinner" style={{ width: "16px", height: "16px", borderWidth: "2px", borderTopColor: "#ffffff" }} />
+                    <span>Writing AI Blogs...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                    </svg>
+                    <span>Write AI Blogs for Queue ({selectedArticles.length})</span>
+                  </>
+                )}
+              </button>
+
+              {selectedArticles.length > 0 && !bulkGenerating && (
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setSelectedArticles([])}
+                  style={{
+                    width: "100%",
+                    justifyContent: "center",
+                    borderColor: "rgba(239, 68, 68, 0.15)",
+                    color: "#ef4444",
+                    fontSize: "0.78rem",
+                    padding: "6px"
+                  }}
+                >
+                  Clear Entire Queue
+                </button>
+              )}
+            </div>
+
+            {/* Queue Logger */}
+            {(bulkLogs.length > 0 || bulkStatus) && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "4px" }}>
+                {bulkStatus && (
+                  <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", fontStyle: "italic" }}>
+                    Status: {bulkStatus}
+                  </span>
+                )}
+                <div style={{
+                  background: "#08090d",
+                  border: "1px solid var(--border-subtle)",
+                  borderRadius: "10px",
+                  padding: "10px 14px",
+                  maxHeight: "130px",
+                  overflowY: "auto",
+                  fontFamily: "monospace",
+                  fontSize: "0.75rem",
+                  color: "var(--text-secondary)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "4px"
+                }}>
+                  {bulkLogs.map((log, index) => (
+                    <div key={index} style={{
+                      color: log.startsWith("[Error]") ? "#ef4444" : log.startsWith("[Firestore]") || log.startsWith("[System] Bulk generation completed") ? "#10b981" : "inherit"
+                    }}>
+                      {log}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* CARD 2: Google AdSense Monetization Hub */}
