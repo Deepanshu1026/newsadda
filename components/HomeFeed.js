@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import PerformanceImage from "./seo/PerformanceImage";
 
 // ─── Helper utilities ──────────────────────────────────────────────────────
 function getFallbackImage(category) {
@@ -39,12 +40,12 @@ function FeaturedPost({ post }) {
   return (
     <Link href={`/posts/${post.id}`} style={{ display: "block" }}>
       <article className="featured-post-card" id="featured-post-card">
-        <div className="featured-post-image-wrapper">
-          <img
+        <div className="featured-post-image-wrapper" style={{ borderRadius: "12px", overflow: "hidden", marginBottom: "16px" }}>
+          <PerformanceImage
             src={post.image || fallback}
             alt={post.title}
-            className="featured-post-image"
-            onError={(e) => { e.target.onerror = null; e.target.src = fallback; }}
+            priority={true}
+            aspectRatio="16/9"
           />
         </div>
         <div>
@@ -83,13 +84,11 @@ function TopStoryItem({ post, index }) {
             <span style={{ color: "var(--text-muted)" }}>{formatDate(post.publishedAt)}</span>
           </div>
         </div>
-        <div className="top-story-thumbnail-wrapper">
-          <img
+        <div className="top-story-thumbnail-wrapper" style={{ width: "80px", flexShrink: 0, overflow: "hidden", borderRadius: "8px" }}>
+          <PerformanceImage
             src={post.image || fallback}
             alt={post.title}
-            className="top-story-thumbnail"
-            onError={(e) => { e.target.onerror = null; e.target.src = fallback; }}
-            loading="lazy"
+            aspectRatio="1/1"
           />
         </div>
       </article>
@@ -103,13 +102,11 @@ function GridPostCard({ post }) {
   return (
     <Link href={`/posts/${post.id}`} style={{ display: "block" }}>
       <article className="grid-post-card" id={`grid-post-card-${post.id}`}>
-        <div className="grid-post-image-wrapper">
-          <img
+        <div className="grid-post-image-wrapper" style={{ borderRadius: "12px", overflow: "hidden", marginBottom: "12px" }}>
+          <PerformanceImage
             src={post.image || fallback}
             alt={post.title}
-            className="grid-post-image"
-            onError={(e) => { e.target.onerror = null; e.target.src = fallback; }}
-            loading="lazy"
+            aspectRatio="16/9"
           />
         </div>
 
@@ -208,28 +205,7 @@ export default function HomeFeed({ initialPosts = [] }) {
           </p>
         </section>
 
-        {/* ── Category Filters ───────────────────────────────── */}
-        <nav
-          id="category-filter-nav"
-          className="category-filter-row"
-          aria-label="Category filters"
-        >
-          {categories.map((cat) => {
-            const isActive =
-              selectedCategory.toLowerCase().trim() === cat.toLowerCase().trim();
-            return (
-              <button
-                key={cat}
-                id={`cat-btn-${cat.toLowerCase().replace(/\s+/g, "-")}`}
-                className={`category-pill-btn${isActive ? " active" : ""}`}
-                onClick={() => setSelectedCategory(cat)}
-                aria-pressed={isActive}
-              >
-                {cat}
-              </button>
-            );
-          })}
-        </nav>
+
 
         {/* ── Empty state ────────────────────────────────────── */}
         {!featuredPost && (
