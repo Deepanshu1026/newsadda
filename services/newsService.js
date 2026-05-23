@@ -227,3 +227,69 @@ function getFallbackHeadlines(category) {
   if (normalizedCategory.includes("crime")) return crimeFallbacks;
   return techFallbacks;
 }
+
+export async function searchNewsForHeadline(headline) {
+  const newsApiKey = process.env.NEWS_API_KEY;
+  const newsDataApiKey = process.env.NEWSDATA_API_KEY;
+
+  if (!newsApiKey && !newsDataApiKey) {
+    console.log("[News Service] No news search API keys configured. Using blank search results.");
+    return [];
+  }
+
+  // Refine and clean query by stripping special chars, then taking the first 6 words for relevance
+  const query = headline
+    .replace(/[^\w\s-]/g, "")
+    .trim()
+    .split(/\s+/)
+    .slice(0, 6)
+    .join(" ");
+
+  if (!query) return [];
+
+  console.log(`[News Service] Performing background search for: "${query}"`);
+  let articles = [];
+
+  // Try NewsAPI everything search
+  if (newsApiKey) {
+    try {
+      const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&language=en&sortBy=relevance&pageSize=4&apiKey=${newsApiKey}`;
+      const response = await fetch(url);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.articles && data.articles.length > 0) {
+          articles = data.articles.map(art => ({
+            title: art.title,
+            description: art.description || art.content || ""
+          }));
+          console.log(`[News Service] Search retrieved ${articles.length} articles from NewsAPI`);
+        }
+      }
+    } catch (error) {
+      console.warn("[News Service] Search NewsAPI failed:", error.message);
+    }
+  }
+
+  // Fallback to NewsData search if needed
+  if (articles.length === 0 && newsDataApiKey) {
+    try {
+      const url = `https://newsdata.io/api/1/latest?apikey=${newsDataApiKey}&q=${encodeURIComponent(query)}&language=en`;
+      const response = await fetch(url);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.results && data.results.length > 0) {
+          articles = data.results.slice(0, 4).map(art => ({
+            title: art.title,
+            description: art.description || art.content || ""
+          }));
+          console.log(`[News Service] Search retrieved ${articles.length} articles from NewsData.io`);
+        }
+      }
+    } catch (error) {
+      console.warn("[News Service] Search NewsData.io failed:", error.message);
+    }
+  }
+
+  return articles.filter(art => art.title && art.description);
+}
+
