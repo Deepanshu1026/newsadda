@@ -1167,3 +1167,31 @@ a {
 @media (max-width: 380px) {
   .feed-hero-title { font-size: 1.7rem; }
 }
+
+/* ─── Skyscraper Desktop Gutter Ad Placements ─────────────── */
+.desktop-side-ad {
+  display: none;
+  position: fixed;
+  top: 160px;
+  width: 120px;
+  height: 600px;
+  z-index: 100;
+  transition: opacity 0.3s ease;
+}
+
+/* Mathematically align ads to sit directly in margins without ever overlapping the content */
+.left-side-ad {
+  left: calc(50% - 740px);
+}
+
+.right-side-ad {
+  right: calc(50% - 740px);
+}
+
+/* Render skyscraper panels on standard desktop and widescreen monitors */
+@media (min-width: 1300px) {
+  .desktop-side-ad {
+    display: block;
+  }
+}
+

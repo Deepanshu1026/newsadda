@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import PerformanceImage from "./seo/PerformanceImage";
+import SafeAdSlot from "./seo/SafeAdSlot";
 
 // ─── Helper utilities ──────────────────────────────────────────────────────
 function getFallbackImage(category) {
@@ -207,6 +208,9 @@ export default function HomeFeed({ initialPosts = [] }) {
 
 
 
+        {/* ── Above-the-fold Premium Ad Slot ─────────────────── */}
+        <SafeAdSlot slotType="leaderboard" />
+
         {/* ── Empty state ────────────────────────────────────── */}
         {!featuredPost && (
           <div className="empty-state" id="empty-state-notice">
@@ -253,14 +257,28 @@ export default function HomeFeed({ initialPosts = [] }) {
           </section>
         )}
 
+        {/* ── Mid-feed Ad Slot to Monetise Scrolling Readers ─── */}
+        {gridPosts.length > 0 && <SafeAdSlot slotType="leaderboard" />}
+
         {/* ── Grid Cards ─────────────────────────────────────── */}
         {gridPosts.length > 0 && (
           <section id="grid-posts-section" aria-label="All stories">
             <div className="grid-section-divider" />
             <div className="grid-cards-container">
-              {gridPosts.map((post) => (
-                <GridPostCard key={post.id} post={post} />
-              ))}
+              {gridPosts.flatMap((post, index) => {
+                const elements = [<GridPostCard key={post.id} post={post} />];
+                
+                // Inject an in-feed banner dynamically after every 10 articles
+                if ((index + 1) % 10 === 0) {
+                  elements.push(
+                    <div key={`in-feed-ad-${index}`} style={{ gridColumn: "1 / -1", width: "100%", margin: "16px 0" }}>
+                      <SafeAdSlot slotType="leaderboard" />
+                    </div>
+                  );
+                }
+                
+                return elements;
+              })}
             </div>
           </section>
         )}

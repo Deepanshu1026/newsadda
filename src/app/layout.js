@@ -3,6 +3,7 @@ import Link from "next/link";
 import Script from "next/script";
 import Image from "next/image";
 import Navbar from "../../components/Navbar";
+import SafeAdSlot from "../../components/seo/SafeAdSlot";
 
 export const metadata = {
   title: "NewsAdda — Trusted & Fast News",
@@ -47,6 +48,16 @@ export default function RootLayout({ children }) {
           crossOrigin="anonymous"
           strategy="afterInteractive"
         />
+
+        {/* Desktop Left Skyscraper Gutter Ad (Fixed viewport side rails) */}
+        <div className="desktop-side-ad left-side-ad">
+          <SafeAdSlot slotType="sidebar" />
+        </div>
+
+        {/* Desktop Right Skyscraper Gutter Ad (Fixed viewport side rails) */}
+        <div className="desktop-side-ad right-side-ad">
+          <SafeAdSlot slotType="sidebar" />
+        </div>
 
         <div className="app-container">
           {/* Interactive Header Navigation */}
