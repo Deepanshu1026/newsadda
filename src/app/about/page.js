@@ -18,7 +18,7 @@ export default function AboutPage() {
   return (
     <div className="main-wrapper" style={{ padding: "40px 20px", maxWidth: "800px", margin: "0 auto" }}>
       <JsonLd schema={orgSchema} />
-      
+
       <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "var(--text-muted)", textDecoration: "none", marginBottom: "24px", fontSize: "0.9rem" }}>
         ← Back to Feed
       </Link>
@@ -39,14 +39,11 @@ export default function AboutPage() {
           We fully adhere to the highest guidelines of Experience, Expertise, Authoritativeness, and Trustworthiness (E-E-A-T). Every article published on our platform is generated or verified by our professional editorial board, referencing active source coordinates and live databases.
         </p>
 
-        <h2 style={{ fontSize: "1.5rem", fontWeight: "700", marginTop: "32px", marginBottom: "12px" }}>Our Publisher & Headquarters</h2>
+        <h2 style={{ fontSize: "1.5rem", fontWeight: "700", marginTop: "32px", marginBottom: "12px" }}>Ownership & Operations</h2>
         <div style={{ backgroundColor: "var(--background-secondary, #f8fafc)", padding: "20px", borderRadius: "12px", border: "1px solid var(--border-subtle)", lineHeight: "1.6" }}>
-          <strong>Publisher:</strong> {SEO_CONFIG.publisher.name}<br />
-          <strong>Founded:</strong> Year {SEO_CONFIG.publisher.foundingDate}<br />
-          <strong>Headquarters:</strong><br />
-          {SEO_CONFIG.publisher.address.street},<br />
-          {SEO_CONFIG.publisher.address.city}, {SEO_CONFIG.publisher.address.state} - {SEO_CONFIG.publisher.address.postalCode},<br />
-          {SEO_CONFIG.publisher.address.country}
+          <strong>Platform:</strong> NewsAdda (Personal News & Tech Blog)<br />
+          <strong>Handled By:</strong> <a href="https://github.com/Deepanshu1026" target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent-primary)", fontWeight: "600", textDecoration: "none" }}>Deepanshu Bisht</a><br />
+          <strong>GitHub Profile:</strong> <a href="https://github.com/Deepanshu1026" target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent-primary)", textDecoration: "none" }}>https://github.com/Deepanshu1026</a>
         </div>
 
         <h2 style={{ fontSize: "1.5rem", fontWeight: "700", marginTop: "32px", marginBottom: "12px" }}>Operational Guidelines</h2>

@@ -19,18 +19,13 @@ export const SEO_CONFIG = {
     "NewsAdda"
   ].join(", "),
   
-  // E-E-A-T Publisher identity profiles
+  // E-E-A-T Publisher identity profiles (Personal News & Tech Blog handled by Deepanshu Bisht)
   publisher: {
-    name: "NewsAdda Publications Group Ltd",
+    name: "Deepanshu Bisht (NewsAdda)",
     logoUrl: "https://newsadda.com/logo.png",
     foundingDate: "2026",
-    address: {
-      street: "12, Kasturba Gandhi Marg, Connaught Place",
-      city: "New Delhi",
-      state: "Delhi",
-      postalCode: "110001",
-      country: "India"
-    }
+    ownerUrl: "https://github.com/Deepanshu1026",
+    email: "bishtdepanshu321@gmail.com"
   },
 
   // Locales for dynamic hreflang indexation

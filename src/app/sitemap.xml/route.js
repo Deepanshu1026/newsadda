@@ -13,7 +13,8 @@ export async function GET() {
       "/about",
       "/contact",
       "/editorial-policy",
-      "/privacy-policy"
+      "/privacy-policy",
+      "/terms"
     ];
 
     // Unique Categories

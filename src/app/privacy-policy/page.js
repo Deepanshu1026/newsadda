@@ -46,7 +46,7 @@ export default function PrivacyPolicyPage() {
 
         <h2 style={{ fontSize: "1.5rem", fontWeight: "700", marginTop: "32px", marginBottom: "12px" }}>4. Direct Contact</h2>
         <p style={{ color: "var(--text-secondary)" }}>
-          For any questions concerning data protections, cookie settings, or standard GDPR/CCPA auditing compliance, please email our support desk directly at <a href="mailto:privacy@newsadda.com" style={{ color: "var(--accent-primary)" }}>privacy@newsadda.com</a> or check our full physical headquarters details on our <Link href="/contact" style={{ color: "var(--accent-primary)", fontWeight: "600" }}>Contact Us Page</Link>.
+          For any questions concerning data protections, cookie settings, or standard GDPR/CCPA auditing compliance, please email our support desk directly at <a href={`mailto:${SEO_CONFIG.publisher.email}`} style={{ color: "var(--accent-primary)" }}>{SEO_CONFIG.publisher.email}</a> or visit our <Link href="/contact" style={{ color: "var(--accent-primary)", fontWeight: "600" }}>Contact Us Page</Link> for contact channels and ownership details.
         </p>
       </article>
     </div>

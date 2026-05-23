@@ -17,14 +17,7 @@ export function getOrganizationSchema() {
       "height": 60
     },
     "foundingDate": SEO_CONFIG.publisher.foundingDate,
-    "address": {
-      "@type": "PostalAddress",
-      "streetAddress": SEO_CONFIG.publisher.address.street,
-      "addressLocality": SEO_CONFIG.publisher.address.city,
-      "addressRegion": SEO_CONFIG.publisher.address.state,
-      "postalCode": SEO_CONFIG.publisher.address.postalCode,
-      "addressCountry": SEO_CONFIG.publisher.address.country
-    },
+    "publishingPrinciples": `${SEO_CONFIG.baseUrl}/editorial-policy`,
     "sameAs": [
       SEO_CONFIG.socials.facebook,
       SEO_CONFIG.socials.twitter,

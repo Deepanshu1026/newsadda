@@ -87,15 +87,16 @@ export default function RootLayout({ children }) {
                 NewsAdda is a highly-optimized news platform utilizing server-rendered
                 Next.js for elite Google SEO indexation, providing fast and trusted updates.
               </p>
-              <div className="footer-links">
+              <div className="footer-links" style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "16px", margin: "12px 0" }}>
                 <Link href="/">Home Feed</Link>
+                <Link href="/about">About Us</Link>
+                <Link href="/contact">Contact Us</Link>
+                <Link href="/privacy-policy">Privacy Policy</Link>
+                <Link href="/terms">Terms &amp; Conditions</Link>
                 <Link href="/tech-dashboard">Tech Dashboard</Link>
-                <a href="https://google.com/adsense" target="_blank" rel="noreferrer">
-                  AdSense
-                </a>
               </div>
-              <p style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
-                © 2026 NewsAdda. All rights reserved.
+              <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginTop: "8px" }}>
+                © 2026 NewsAdda. All rights reserved. • Handled by <a href="https://github.com/Deepanshu1026" target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-secondary)", fontWeight: "600", textDecoration: "none" }}>Deepanshu Bisht</a>
               </p>
             </div>
           </footer>

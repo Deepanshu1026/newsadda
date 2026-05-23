@@ -33,29 +33,27 @@ export default function ContactPage() {
           <div style={{ border: "1px solid var(--border-subtle)", padding: "24px", borderRadius: "16px", backgroundColor: "var(--background-secondary, #f8fafc)" }}>
             <h3 style={{ fontSize: "1.15rem", fontWeight: "700", marginBottom: "8px" }}>General Queries & Support</h3>
             <p style={{ fontSize: "0.95rem", color: "var(--text-secondary)", margin: 0 }}>
-              Email: <a href="mailto:support@newsadda.com" style={{ color: "var(--accent-primary)", fontWeight: "600" }}>support@newsadda.com</a>
+              Email: <a href={`mailto:${SEO_CONFIG.publisher.email}`} style={{ color: "var(--accent-primary)", fontWeight: "600" }}>{SEO_CONFIG.publisher.email}</a>
             </p>
           </div>
 
           <div style={{ border: "1px solid var(--border-subtle)", padding: "24px", borderRadius: "16px", backgroundColor: "var(--background-secondary, #f8fafc)" }}>
             <h3 style={{ fontSize: "1.15rem", fontWeight: "700", marginBottom: "8px" }}>Editorial & Press Invites</h3>
             <p style={{ fontSize: "0.95rem", color: "var(--text-secondary)", margin: 0 }}>
-              Email: <a href="mailto:editor@newsadda.com" style={{ color: "var(--accent-primary)", fontWeight: "600" }}>editor@newsadda.com</a>
+              Email: <a href={`mailto:${SEO_CONFIG.publisher.email}`} style={{ color: "var(--accent-primary)", fontWeight: "600" }}>{SEO_CONFIG.publisher.email}</a>
             </p>
           </div>
         </div>
 
         <h2 style={{ fontSize: "1.5rem", fontWeight: "700", marginTop: "32px", marginBottom: "12px" }}>Editorial Corrections</h2>
         <p style={{ lineHeight: "1.65", color: "var(--text-secondary)", marginBottom: "16px" }}>
-          NewsAdda is dedicated to absolute factual accuracy. If you spot a spelling error, an incorrect figure, or a factually incomplete assertion in any of our reports, please email our Editor-in-Chief at <a href="mailto:corrections@newsadda.com" style={{ color: "var(--accent-primary)" }}>corrections@newsadda.com</a>. Please include the specific URL link to the article and the details of the correction.
+          NewsAdda is dedicated to absolute factual accuracy. If you spot a spelling error, an incorrect figure, or a factually incomplete assertion in any of our reports, please email our Editor-in-Chief at <a href={`mailto:${SEO_CONFIG.publisher.email}`} style={{ color: "var(--accent-primary)" }}>{SEO_CONFIG.publisher.email}</a>. Please include the specific URL link to the article and the details of the correction.
         </p>
 
-        <h2 style={{ fontSize: "1.5rem", fontWeight: "700", marginTop: "32px", marginBottom: "12px" }}>Headquarters</h2>
+        <h2 style={{ fontSize: "1.5rem", fontWeight: "700", marginTop: "32px", marginBottom: "12px" }}>Ownership & Operations</h2>
         <p style={{ lineHeight: "1.65", color: "var(--text-secondary)", margin: 0 }}>
-          {SEO_CONFIG.publisher.name}<br />
-          {SEO_CONFIG.publisher.address.street},<br />
-          {SEO_CONFIG.publisher.address.city}, {SEO_CONFIG.publisher.address.state} - {SEO_CONFIG.publisher.address.postalCode},<br />
-          {SEO_CONFIG.publisher.address.country}
+          <strong>Managed By:</strong> <a href="https://github.com/Deepanshu1026" target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent-primary)", fontWeight: "600", textDecoration: "none" }}>Deepanshu Bisht</a><br />
+          <strong>GitHub Portfolio:</strong> <a href="https://github.com/Deepanshu1026" target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent-primary)", textDecoration: "none" }}>https://github.com/Deepanshu1026</a>
         </p>
       </article>
     </div>
