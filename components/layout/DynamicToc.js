@@ -23,7 +23,7 @@ export default function DynamicToc({ selector = ".article-content" }) {
       if (!container) return;
 
       const headingElements = Array.from(container.querySelectorAll("h2, h3"));
-      
+
       const parsedHeadings = headingElements.map((el, index) => {
         // Set id if absent
         if (!el.id) {
@@ -33,7 +33,7 @@ export default function DynamicToc({ selector = ".article-content" }) {
             .replace(/(^-|-$)/g, "");
           el.id = `${textId}-${index}`;
         }
-        
+
         return {
           id: el.id,
           text: el.textContent,
@@ -82,7 +82,7 @@ export default function DynamicToc({ selector = ".article-content" }) {
   };
 
   return (
-    <nav 
+    <nav
       style={{
         padding: "20px",
         backgroundColor: "var(--background-secondary, #f8fafc)",
@@ -93,7 +93,7 @@ export default function DynamicToc({ selector = ".article-content" }) {
       className="article-toc"
       aria-label="Table of contents"
     >
-      <h3 
+      <h3
         style={{
           fontSize: "0.85rem",
           fontWeight: "700",
@@ -114,16 +114,16 @@ export default function DynamicToc({ selector = ".article-content" }) {
         </svg>
         Table of Contents
       </h3>
-      
+
       <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "8px" }}>
         {headings.map((heading) => {
           const isH3 = heading.level === "h3";
           const isActive = heading.id === activeId;
-          
+
           return (
-            <li 
-              key={heading.id} 
-              style={{ 
+            <li
+              key={heading.id}
+              style={{
                 paddingLeft: isH3 ? "16px" : "0px",
                 fontSize: "0.9rem"
               }}
