@@ -14,7 +14,7 @@ export const metadata = {
   openGraph: {
     title: "NewsAdda — Trusted & Fast News",
     description: "Real-time updates, trusted and fast news.",
-    url: "https://newsadda.com",
+    url: "https://newsadda.blog",
     siteName: "NewsAdda",
     images: [
       {

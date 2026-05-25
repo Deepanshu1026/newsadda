@@ -5,7 +5,7 @@
 
 export const SEO_CONFIG = {
   siteName: "NewsAdda",
-  baseUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://newsadda.com",
+  baseUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://newsadda.blog",
   defaultTitle: "NewsAdda | Real-Time Factual News, Analysis & Perspectives",
   defaultDescription: "NewsAdda delivers fast, factual, and deeply researched news coverage across politics, cricket, science, business, and technology. Stay ahead with our real-time India Desk updates.",
   defaultKeywords: [
@@ -18,11 +18,11 @@ export const SEO_CONFIG = {
     "Breaking news India",
     "NewsAdda"
   ].join(", "),
-  
+
   // E-E-A-T Publisher identity profiles (Personal News & Tech Blog handled by Deepanshu Bisht)
   publisher: {
     name: "Deepanshu Bisht (NewsAdda)",
-    logoUrl: "https://newsadda.com/logo.png",
+    logoUrl: "https://newsadda.blog/logo.png",
     foundingDate: "2026",
     ownerUrl: "https://github.com/Deepanshu1026",
     email: "bishtdepanshu321@gmail.com"
