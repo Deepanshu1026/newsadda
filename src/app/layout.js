@@ -49,6 +49,22 @@ export default function RootLayout({ children }) {
           strategy="afterInteractive"
         />
 
+        {/* Google Analytics (gtag.js) */}
+        <Script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-CYFDN348Z4"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-CYFDN348Z4');
+          `}
+        </Script>
+
         {/* Desktop Left Skyscraper Gutter Ad (Fixed viewport side rails) */}
         <div className="desktop-side-ad left-side-ad">
           <SafeAdSlot slotType="sidebar" />
