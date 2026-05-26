@@ -35,6 +35,17 @@ export default function AdminPanel({ onSyncComplete }) {
   const [draggedIndex, setDraggedIndex] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
 
+  // Published Blogs Management States
+  const [publishedPosts, setPublishedPosts] = useState([]);
+  const [loadingPosts, setLoadingPosts] = useState(false);
+  const [postsSearchQuery, setPostsSearchQuery] = useState("");
+  const [editingPost, setEditingPost] = useState(null);
+  const [deletingPost, setDeletingPost] = useState(null);
+  const [savingPost, setSavingPost] = useState(false);
+  const [postsPage, setPostsPage] = useState(1);
+  const postsPerPage = 5;
+  const [toast, setToast] = useState(null);
+
   // Load selection queue from localStorage on initial mount
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -56,6 +67,102 @@ export default function AdminPanel({ onSyncComplete }) {
       localStorage.setItem("newsadda_manual_queue", JSON.stringify(selectedArticles));
     }
   }, [selectedArticles, isQueueLoaded]);
+
+  // Helper to show dashboard toast notifications
+  const showToast = (type, message) => {
+    setToast({ type, message });
+    setTimeout(() => {
+      setToast(null);
+    }, 4000);
+  };
+
+  // Fetch all published posts from database
+  const fetchPublishedPosts = async () => {
+    setLoadingPosts(true);
+    try {
+      const res = await fetch("/api/posts");
+      if (res.ok) {
+        const data = await res.json();
+        setPublishedPosts(data.posts || []);
+      } else {
+        showToast("error", "Failed to retrieve published blogs");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("error", "Network error while loading blogs");
+    } finally {
+      setLoadingPosts(false);
+    }
+  };
+
+  // Load published blogs on mount
+  useEffect(() => {
+    fetchPublishedPosts();
+  }, []);
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    if (!editingPost || !editingPost.title.trim()) return;
+
+    setSavingPost(true);
+    try {
+      const res = await fetch(`/api/posts/${editingPost.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: editingPost.title,
+          category: editingPost.category,
+          author: editingPost.author,
+          image: editingPost.image,
+          description: editingPost.description,
+          content: editingPost.content
+        })
+      });
+
+      if (res.ok) {
+        showToast("success", "Blog post updated successfully!");
+        setEditingPost(null);
+        fetchPublishedPosts();
+        fetchStats();
+        router.refresh();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        showToast("error", data.error || "Failed to update blog post");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("error", "Connection error. Unable to save changes.");
+    } finally {
+      setSavingPost(false);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingPost) return;
+
+    setSavingPost(true);
+    try {
+      const res = await fetch(`/api/posts/${deletingPost.id}`, {
+        method: "DELETE"
+      });
+
+      if (res.ok) {
+        showToast("success", "Blog post permanently deleted!");
+        setDeletingPost(null);
+        fetchPublishedPosts();
+        fetchStats();
+        router.refresh();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        showToast("error", data.error || "Failed to delete blog post");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("error", "Connection error. Unable to delete.");
+    } finally {
+      setSavingPost(false);
+    }
+  };
 
   const handleDragStart = (e, index) => {
     setDraggedIndex(index);
@@ -91,12 +198,12 @@ export default function AdminPanel({ onSyncComplete }) {
 
     const newQueue = [...selectedArticles];
     const draggedItem = newQueue[draggedIndex];
-    
+
     // Remove from original slot
     newQueue.splice(draggedIndex, 1);
     // Insert into target slot
     newQueue.splice(index, 0, draggedItem);
-    
+
     setSelectedArticles(newQueue);
     setDraggedIndex(null);
     setDragOverIndex(null);
@@ -209,17 +316,17 @@ export default function AdminPanel({ onSyncComplete }) {
 
   const handleBulkGenerate = async () => {
     if (selectedArticles.length === 0) return;
-    
+
     setBulkGenerating(true);
     setBulkStatus("Starting manual AI blog generation...");
     setBulkLogs(["[System] Starting manual bulk generation for " + selectedArticles.length + " article(s)..."]);
-    
+
     try {
       const articlesToSend = selectedArticles;
 
       setBulkLogs(prev => [...prev, "[News Client] Packaging selected headlines..."]);
       await new Promise(resolve => setTimeout(resolve, 300));
-      
+
       for (let i = 0; i < articlesToSend.length; i++) {
         const art = articlesToSend[i];
         setBulkLogs(prev => [...prev, `[Sarvam AI] Writing blog article ${i + 1}/${articlesToSend.length}: "${art.title}"...`]);
@@ -227,13 +334,13 @@ export default function AdminPanel({ onSyncComplete }) {
       }
 
       setBulkLogs(prev => [...prev, "[Database] Saving new articles persistently to Firestore..."]);
-      
+
       const res = await fetch("/api/sync/manual", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ articles: articlesToSend })
       });
-      
+
       if (res.ok) {
         const result = await res.json();
         setBulkLogs(prev => [
@@ -242,11 +349,12 @@ export default function AdminPanel({ onSyncComplete }) {
           "[System] Bulk generation completed successfully."
         ]);
         setBulkStatus("Bulk generation completed!");
-        
+
         fetchStats();
+        fetchPublishedPosts();
         router.refresh();
         if (onSyncComplete) onSyncComplete();
-        
+
         setSelectedArticles([]);
       } else {
         const err = await res.json();
@@ -278,11 +386,11 @@ export default function AdminPanel({ onSyncComplete }) {
     fetchStats();
     // Poll stats every 15 seconds to sync dashboard dynamically
     const timer = setInterval(fetchStats, 15000);
-    
+
     if (typeof window !== "undefined") {
       setForceLiveAds(localStorage.getItem("newsadda_force_live_ads") === "true");
     }
-    
+
     return () => clearInterval(timer);
   }, []);
 
@@ -299,7 +407,7 @@ export default function AdminPanel({ onSyncComplete }) {
     setLoading(true);
     setStatusMessage("Initializing synchronization pipeline...");
     setSyncLogs(["[System] Starting automated sync..."]);
-    
+
     try {
       // Step 1: Initial query logs
       const initialLogs = [
@@ -307,7 +415,7 @@ export default function AdminPanel({ onSyncComplete }) {
         "[News Client] Filtering out duplicate URLs successfully.",
         "[News Client] Checking headlines against database.json..."
       ];
-      
+
       for (const log of initialLogs) {
         await new Promise(resolve => setTimeout(resolve, 600));
         setSyncLogs(prev => [...prev, log]);
@@ -316,11 +424,11 @@ export default function AdminPanel({ onSyncComplete }) {
 
       // Send the actual API request to the backend
       const res = await fetch("/api/sync", { method: "POST" });
-      
+
       if (res.ok) {
         const result = await res.json();
         const count = result.addedCount || 0;
-        
+
         if (count > 0) {
           // If articles were actually added, show the generation steps
           const addedLogs = [
@@ -347,8 +455,9 @@ export default function AdminPanel({ onSyncComplete }) {
           setSyncLogs(prev => [...prev, `[Success] ${result.message}`]);
           setStatusMessage("Database is already up to date.");
         }
-        
+
         fetchStats();
+        fetchPublishedPosts();
         router.refresh(); // Clear Next.js Client-Side Router Cache
         if (onSyncComplete) onSyncComplete();
       } else {
@@ -386,40 +495,40 @@ export default function AdminPanel({ onSyncComplete }) {
             <div className="sync-status-indicator" style={{
               background: stats.firestoreStatus && stats.firestoreStatus !== "none"
                 ? (stats.firestoreStatus === "active" ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)")
-                : (stats.isKvConnected 
-                  ? "rgba(16, 185, 129, 0.1)" 
-                  : stats.isVercel 
-                    ? "rgba(245, 158, 11, 0.1)" 
+                : (stats.isKvConnected
+                  ? "rgba(16, 185, 129, 0.1)"
+                  : stats.isVercel
+                    ? "rgba(245, 158, 11, 0.1)"
                     : "rgba(99, 102, 241, 0.1)"),
               border: stats.firestoreStatus && stats.firestoreStatus !== "none"
                 ? (stats.firestoreStatus === "active" ? "1px solid rgba(16, 185, 129, 0.2)" : "1px solid rgba(239, 68, 68, 0.2)")
-                : (stats.isKvConnected 
-                  ? "1px solid rgba(16, 185, 129, 0.2)" 
-                  : stats.isVercel 
-                    ? "1px solid rgba(245, 158, 11, 0.2)" 
+                : (stats.isKvConnected
+                  ? "1px solid rgba(16, 185, 129, 0.2)"
+                  : stats.isVercel
+                    ? "1px solid rgba(245, 158, 11, 0.2)"
                     : "1px solid rgba(99, 102, 241, 0.2)"),
               color: stats.firestoreStatus && stats.firestoreStatus !== "none"
                 ? (stats.firestoreStatus === "active" ? "#10b981" : "#ef4444")
-                : (stats.isKvConnected 
-                  ? "#10b981" 
-                  : stats.isVercel 
-                    ? "#f59e0b" 
+                : (stats.isKvConnected
+                  ? "#10b981"
+                  : stats.isVercel
+                    ? "#f59e0b"
                     : "var(--accent-primary)")
             }}>
               <div className="status-dot" style={{
                 backgroundColor: stats.firestoreStatus && stats.firestoreStatus !== "none"
                   ? (stats.firestoreStatus === "active" ? "#10b981" : "#ef4444")
-                  : (stats.isKvConnected 
-                    ? "#10b981" 
-                    : stats.isVercel 
-                      ? "#f59e0b" 
+                  : (stats.isKvConnected
+                    ? "#10b981"
+                    : stats.isVercel
+                      ? "#f59e0b"
                       : "var(--accent-primary)"),
                 boxShadow: stats.firestoreStatus && stats.firestoreStatus !== "none"
                   ? (stats.firestoreStatus === "active" ? "0 0 8px #10b981" : "0 0 8px #ef4444")
-                  : (stats.isKvConnected 
-                    ? "0 0 8px #10b981" 
-                    : stats.isVercel 
-                      ? "0 0 8px #f59e0b" 
+                  : (stats.isKvConnected
+                    ? "0 0 8px #10b981"
+                    : stats.isVercel
+                      ? "0 0 8px #f59e0b"
                       : "0 0 8px var(--accent-primary)")
               }} />
               <span>
@@ -427,10 +536,10 @@ export default function AdminPanel({ onSyncComplete }) {
                   ? (stats.firestoreStatus === "active"
                     ? "DB: Persistent (Firestore)"
                     : "DB: Firestore Error")
-                  : (stats.isKvConnected 
-                    ? "DB: Persistent (Vercel KV)" 
-                    : stats.isVercel 
-                      ? "DB: Ephemeral (Temporary)" 
+                  : (stats.isKvConnected
+                    ? "DB: Persistent (Vercel KV)"
+                    : stats.isVercel
+                      ? "DB: Ephemeral (Temporary)"
                       : "DB: Local Workspace (Persistent)")
                 }
               </span>
@@ -483,7 +592,7 @@ export default function AdminPanel({ onSyncComplete }) {
               <span>Cloud Firestore Connection Error</span>
             </div>
             <p style={{ margin: 0, fontSize: "0.83rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
-              Unable to connect to Cloud Firestore. Please verify your <strong>FIRESTORE_PROJECT_ID</strong> and <strong>FIRESTORE_API_KEY</strong> environment variables, 
+              Unable to connect to Cloud Firestore. Please verify your <strong>FIRESTORE_PROJECT_ID</strong> and <strong>FIRESTORE_API_KEY</strong> environment variables,
               and make sure your Firestore Security Rules allow public read/write access (e.g. <code>allow read, write: if true;</code>).
             </p>
           </div>
@@ -531,7 +640,7 @@ export default function AdminPanel({ onSyncComplete }) {
               <span>Storage is Ephemeral (Articles Will Vanish!)</span>
             </div>
             <p style={{ margin: 0, fontSize: "0.83rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
-              You are running on Vercel, but <strong>Vercel KV is not connected</strong>. 
+              You are running on Vercel, but <strong>Vercel KV is not connected</strong>.
               Newly synced articles are saved in a temporary directory and will <strong>vanish automatically after a few minutes</strong> when the serverless instance restarts.
             </p>
             <div style={{
@@ -777,7 +886,8 @@ export default function AdminPanel({ onSyncComplete }) {
         )}
 
         {/* CSS Media Rules for Queue Column wrapping on smaller viewports */}
-        <style dangerouslySetInnerHTML={{__html: `
+        <style dangerouslySetInnerHTML={{
+          __html: `
           @media (max-width: 991px) {
             .admin-queue-section {
               border-left: none !important;
@@ -793,6 +903,27 @@ export default function AdminPanel({ onSyncComplete }) {
           .queue-item-hoverable:hover {
             background: rgba(15, 23, 42, 0.02) !important;
             border-color: #cbd5e1 !important;
+          }
+          @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+          }
+          @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+          @keyframes modalScale {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+          }
+          .toast-slide-in {
+            animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          }
+          .modal-fade-in {
+            animation: fadeIn 0.2s ease-out forwards;
+          }
+          .modal-scale-in {
+            animation: modalScale 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
           }
         `}} />
 
@@ -996,7 +1127,7 @@ export default function AdminPanel({ onSyncComplete }) {
                   const isDragged = draggedIndex === index;
                   const isDragOver = dragOverIndex === index;
                   const isPriority = index < 3;
-                  
+
                   return (
                     <div
                       key={`${article.title}-${index}`}
@@ -1092,7 +1223,7 @@ export default function AdminPanel({ onSyncComplete }) {
                           <span style={{ fontSize: "0.62rem", color: "var(--text-muted)", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
                             {article.source || "News Desk"}
                           </span>
-                          
+
                           {/* Premium Glowing Priority Labels */}
                           {isPriority && (
                             <span style={{
@@ -1275,6 +1406,730 @@ export default function AdminPanel({ onSyncComplete }) {
         </div>
       </div>
 
+
+      {/* CARD 3: Manage Published Blogs */}
+      <div className="dashboard-card" style={{ borderTop: "1px solid var(--border-subtle)", position: "relative" }}>
+        <div className="dashboard-header">
+          <div className="dashboard-title-group" style={{ flex: 1, minWidth: "250px" }}>
+            <h2 className="dashboard-title">
+              Manage <span className="logo-accent" style={{ color: "var(--text-primary)" }}>Published Blogs</span>
+            </h2>
+            <p className="dashboard-subtitle">
+              Real-time directory of published blogs. Modify or remove articles instantly.
+            </p>
+          </div>
+          {/* Refresh Button */}
+          <button
+            className="btn-secondary"
+            onClick={fetchPublishedPosts}
+            disabled={loadingPosts}
+            style={{
+              padding: "8px 14px",
+              fontSize: "0.82rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              height: "fit-content"
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={loadingPosts ? "spinner" : ""} style={loadingPosts ? { animation: "spin 0.8s linear infinite" } : {}}>
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+            </svg>
+            <span>{loadingPosts ? "Loading..." : "Refresh List"}</span>
+          </button>
+        </div>
+
+        {/* Search published blogs */}
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", flexWrap: "wrap" }}>
+          <div style={{ position: "relative", flex: 1, minWidth: "250px" }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2.5" style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)" }}>
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input
+              type="text"
+              placeholder="Search by title, author, description, or category..."
+              value={postsSearchQuery}
+              onChange={(e) => {
+                setPostsSearchQuery(e.target.value);
+                setPostsPage(1); // Reset page to 1 when search changes
+              }}
+              style={{
+                padding: "10px 16px 10px 38px",
+                borderRadius: "10px",
+                border: "1px solid var(--border-subtle)",
+                background: "var(--bg-surface-solid)",
+                color: "var(--text-primary)",
+                fontSize: "0.85rem",
+                width: "100%",
+                outline: "none",
+                transition: "all 0.25s ease"
+              }}
+            />
+            {postsSearchQuery && (
+              <button
+                type="button"
+                onClick={() => {
+                  setPostsSearchQuery("");
+                  setPostsPage(1);
+                }}
+                style={{
+                  position: "absolute",
+                  right: "12px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "none",
+                  border: "none",
+                  color: "var(--text-muted)",
+                  cursor: "pointer",
+                  fontSize: "1.2rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: 0
+                }}
+              >
+                ×
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* List of published posts */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          {loadingPosts ? (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "12px", padding: "60px 0" }}>
+              <div className="spinner" style={{ width: "36px", height: "36px", borderWidth: "3px" }} />
+              <span style={{ fontSize: "0.88rem", color: "var(--text-muted)", fontWeight: "500" }}>Loading published database...</span>
+            </div>
+          ) : (
+            (() => {
+              // Filter posts
+              const filtered = publishedPosts.filter(p => {
+                const query = postsSearchQuery.toLowerCase().trim();
+                if (!query) return true;
+                return (
+                  (p.title || "").toLowerCase().includes(query) ||
+                  (p.author || "").toLowerCase().includes(query) ||
+                  (p.category || "").toLowerCase().includes(query) ||
+                  (p.description || "").toLowerCase().includes(query)
+                );
+              });
+
+              if (filtered.length === 0) {
+                return (
+                  <div style={{
+                    padding: "60px 20px",
+                    textAlign: "center",
+                    border: "1px dashed var(--border-subtle)",
+                    borderRadius: "12px",
+                    color: "var(--text-muted)",
+                    fontSize: "0.9rem",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: "10px"
+                  }}>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ opacity: 0.5 }}>
+                      <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                      <polyline points="14 2 14 8 20 8" />
+                      <line x1="8" y1="13" x2="16" y2="13" />
+                      <line x1="8" y1="17" x2="16" y2="17" />
+                      <line x1="10" y1="9" x2="9" y2="9" />
+                    </svg>
+                    <span>No matching published blogs found.</span>
+                  </div>
+                );
+              }
+
+              // Calculate pagination
+              const totalPages = Math.ceil(filtered.length / postsPerPage);
+              const currentPage = Math.min(postsPage, totalPages);
+              const paginated = filtered.slice((currentPage - 1) * postsPerPage, currentPage * postsPerPage);
+
+              return (
+                <>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                    {paginated.map(post => (
+                      <div
+                        key={post.id}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "16px",
+                          padding: "14px 18px",
+                          borderRadius: "12px",
+                          border: "1px solid var(--border-subtle)",
+                          background: "var(--bg-surface-solid)",
+                          boxShadow: "var(--glass-shadow)",
+                          transition: "all 0.25s ease",
+                          flexWrap: "wrap"
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = "var(--accent-primary-glow)";
+                          e.currentTarget.style.transform = "translateY(-1px)";
+                          e.currentTarget.style.boxShadow = "0 8px 20px -6px rgba(15, 23, 42, 0.04)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = "var(--border-subtle)";
+                          e.currentTarget.style.transform = "translateY(0)";
+                          e.currentTarget.style.boxShadow = "var(--glass-shadow)";
+                        }}
+                      >
+                        {/* Thumbnail */}
+                        {post.image && (
+                          <div style={{ width: "64px", height: "64px", borderRadius: "8px", overflow: "hidden", border: "1px solid var(--border-subtle)", flexShrink: 0 }}>
+                            <img src={post.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          </div>
+                        )}
+
+                        {/* Title & Metadata */}
+                        <div style={{ flex: 1, minWidth: "250px", display: "flex", flexDirection: "column", gap: "4px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                            <span style={{
+                              fontSize: "0.68rem",
+                              background: "var(--accent-primary-glow)",
+                              color: "var(--accent-primary)",
+                              padding: "2px 8px",
+                              borderRadius: "4px",
+                              fontWeight: "700",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.03em"
+                            }}>
+                              {post.category}
+                            </span>
+                            <span style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>
+                              by <strong>{post.author || "Unknown"}</strong>
+                            </span>
+                            <span style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>•</span>
+                            <span style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>
+                              {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "Draft"}
+                            </span>
+                          </div>
+                          <h4 style={{ fontSize: "0.95rem", fontWeight: "700", color: "var(--text-primary)", margin: 0, lineHeight: "1.4" }}>
+                            {post.title}
+                          </h4>
+                          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "2px" }}>
+                            <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "4px" }}>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
+                              </svg>
+                              <span>{post.views || 0} views</span>
+                            </span>
+                            <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "4px" }}>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 6 12 12 16 14" />
+                              </svg>
+                              <span>{post.readTime || "3 min read"}</span>
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Actions buttons */}
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+                          <button
+                            type="button"
+                            onClick={() => setEditingPost({ ...post })}
+                            style={{
+                              background: "rgba(79, 70, 229, 0.05)",
+                              border: "1px solid rgba(79, 70, 229, 0.15)",
+                              color: "var(--accent-primary)",
+                              padding: "6px 12px",
+                              borderRadius: "8px",
+                              fontSize: "0.78rem",
+                              fontWeight: "600",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              transition: "all 0.2s ease"
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = "rgba(79, 70, 229, 0.12)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = "rgba(79, 70, 229, 0.05)";
+                            }}
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                            </svg>
+                            <span>Edit</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeletingPost(post)}
+                            style={{
+                              background: "rgba(239, 68, 68, 0.05)",
+                              border: "1px solid rgba(239, 68, 68, 0.15)",
+                              color: "#ef4444",
+                              padding: "6px 12px",
+                              borderRadius: "8px",
+                              fontSize: "0.78rem",
+                              fontWeight: "600",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              transition: "all 0.2s ease"
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = "rgba(239, 68, 68, 0.12)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = "rgba(239, 68, 68, 0.05)";
+                            }}
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                              <line x1="10" y1="11" x2="10" y2="17" />
+                              <line x1="14" y1="11" x2="14" y2="17" />
+                            </svg>
+                            <span>Delete</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Pagination Footer */}
+                  {totalPages > 1 && (
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid var(--border-subtle)", paddingTop: "14px", marginTop: "4px", flexWrap: "wrap", gap: "10px" }}>
+                      <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                        Showing Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong> ({filtered.length} total articles)
+                      </span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <button
+                          type="button"
+                          className="btn-secondary"
+                          onClick={() => setPostsPage(prev => Math.max(1, prev - 1))}
+                          disabled={currentPage === 1}
+                          style={{ padding: "6px 12px", fontSize: "0.78rem" }}
+                        >
+                          Previous
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-secondary"
+                          onClick={() => setPostsPage(prev => Math.min(totalPages, prev + 1))}
+                          disabled={currentPage === totalPages}
+                          style={{ padding: "6px 12px", fontSize: "0.78rem" }}
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              );
+            })()
+          )}
+        </div>
+      </div>
+
+
+      {/* MODAL 1: Edit Blog Post */}
+      {editingPost && (
+        <div
+          className="modal-fade-in"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background: "rgba(15, 23, 42, 0.4)",
+            backdropFilter: "blur(6px)",
+            zIndex: 9999,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: "20px",
+            boxSizing: "border-box"
+          }}
+          onClick={() => !savingPost && setEditingPost(null)}
+        >
+          <div
+            className="modal-scale-in"
+            style={{
+              background: "#ffffff",
+              border: "1px solid rgba(255, 255, 255, 0.2)",
+              borderRadius: "16px",
+              padding: "28px",
+              maxWidth: "680px",
+              width: "100%",
+              boxShadow: "0 25px 50px -12px rgba(15, 23, 42, 0.25)",
+              maxHeight: "90vh",
+              overflowY: "auto",
+              boxSizing: "border-box"
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
+              <div>
+                <h3 style={{ fontSize: "1.3rem", fontWeight: "800", color: "var(--text-primary)", margin: 0 }}>Edit Published Blog</h3>
+                <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", margin: "4px 0 0 0" }}>Update the article details. Changes will apply instantly to all views.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingPost(null)}
+                disabled={savingPost}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "var(--text-muted)",
+                  fontSize: "1.4rem",
+                  padding: "4px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleEditSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px" }}>
+                {/* Title */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <label style={{ fontSize: "0.78rem", fontWeight: "700", color: "var(--text-secondary)" }}>Title</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingPost.title}
+                    onChange={(e) => setEditingPost(prev => ({ ...prev, title: e.target.value }))}
+                    style={{
+                      padding: "10px 12px",
+                      borderRadius: "8px",
+                      border: "1px solid var(--border-subtle)",
+                      fontSize: "0.88rem",
+                      color: "var(--text-primary)",
+                      outline: "none"
+                    }}
+                  />
+                </div>
+
+                {/* Category */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <label style={{ fontSize: "0.78rem", fontWeight: "700", color: "var(--text-secondary)" }}>Category</label>
+                  <select
+                    value={editingPost.category}
+                    onChange={(e) => setEditingPost(prev => ({ ...prev, category: e.target.value }))}
+                    style={{
+                      padding: "10px 12px",
+                      borderRadius: "8px",
+                      border: "1px solid var(--border-subtle)",
+                      fontSize: "0.88rem",
+                      color: "var(--text-primary)",
+                      outline: "none",
+                      background: "white"
+                    }}
+                  >
+                    {["Politics", "Cricket", "Technology", "Science", "Business", "Crime", "News"].map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px" }}>
+                {/* Author */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <label style={{ fontSize: "0.78rem", fontWeight: "700", color: "var(--text-secondary)" }}>Author</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingPost.author}
+                    onChange={(e) => setEditingPost(prev => ({ ...prev, author: e.target.value }))}
+                    style={{
+                      padding: "10px 12px",
+                      borderRadius: "8px",
+                      border: "1px solid var(--border-subtle)",
+                      fontSize: "0.88rem",
+                      color: "var(--text-primary)",
+                      outline: "none"
+                    }}
+                  />
+                </div>
+
+                {/* Image URL */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <label style={{ fontSize: "0.78rem", fontWeight: "700", color: "var(--text-secondary)" }}>Image URL</label>
+                  <input
+                    type="url"
+                    required
+                    value={editingPost.image}
+                    onChange={(e) => setEditingPost(prev => ({ ...prev, image: e.target.value }))}
+                    style={{
+                      padding: "10px 12px",
+                      borderRadius: "8px",
+                      border: "1px solid var(--border-subtle)",
+                      fontSize: "0.88rem",
+                      color: "var(--text-primary)",
+                      outline: "none"
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Description */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <label style={{ fontSize: "0.78rem", fontWeight: "700", color: "var(--text-secondary)" }}>Short Description</label>
+                <textarea
+                  required
+                  rows={2}
+                  value={editingPost.description}
+                  onChange={(e) => setEditingPost(prev => ({ ...prev, description: e.target.value }))}
+                  style={{
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid var(--border-subtle)",
+                    fontSize: "0.88rem",
+                    color: "var(--text-primary)",
+                    outline: "none",
+                    fontFamily: "inherit",
+                    resize: "vertical"
+                  }}
+                />
+              </div>
+
+              {/* Content (Markdown) */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <label style={{ fontSize: "0.78rem", fontWeight: "700", color: "var(--text-secondary)" }}>Article Body (Markdown Supported)</label>
+                  <span style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>
+                    {editingPost.content ? editingPost.content.split(/\s+/).filter(Boolean).length : 0} words
+                  </span>
+                </div>
+                <textarea
+                  required
+                  rows={10}
+                  value={editingPost.content}
+                  onChange={(e) => setEditingPost(prev => ({ ...prev, content: e.target.value }))}
+                  style={{
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid var(--border-subtle)",
+                    fontSize: "0.88rem",
+                    color: "var(--text-primary)",
+                    outline: "none",
+                    fontFamily: "monospace",
+                    lineHeight: "1.5",
+                    resize: "vertical"
+                  }}
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "8px", borderTop: "1px solid var(--border-subtle)", paddingTop: "16px" }}>
+                <button
+                  type="button"
+                  onClick={() => setEditingPost(null)}
+                  disabled={savingPost}
+                  style={{
+                    background: "none",
+                    border: "1px solid var(--border-subtle)",
+                    color: "var(--text-secondary)",
+                    padding: "10px 20px",
+                    borderRadius: "8px",
+                    fontSize: "0.88rem",
+                    fontWeight: "600",
+                    cursor: "pointer"
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingPost}
+                  style={{
+                    background: "var(--accent-primary)",
+                    color: "white",
+                    border: "none",
+                    padding: "10px 24px",
+                    borderRadius: "8px",
+                    fontSize: "0.88rem",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px"
+                  }}
+                >
+                  {savingPost ? (
+                    <>
+                      <div className="spinner" style={{ width: "14px", height: "14px", borderWidth: "2px", borderTopColor: "#ffffff" }} />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <span>Save Changes</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: Delete Confirmation */}
+      {deletingPost && (
+        <div
+          className="modal-fade-in"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background: "rgba(15, 23, 42, 0.4)",
+            backdropFilter: "blur(6px)",
+            zIndex: 9999,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: "20px",
+            boxSizing: "border-box"
+          }}
+          onClick={() => !savingPost && setDeletingPost(null)}
+        >
+          <div
+            className="modal-scale-in"
+            style={{
+              background: "#ffffff",
+              border: "1px solid rgba(255, 255, 255, 0.2)",
+              borderRadius: "16px",
+              padding: "28px",
+              maxWidth: "440px",
+              width: "100%",
+              boxShadow: "0 25px 50px -12px rgba(15, 23, 42, 0.25)",
+              boxSizing: "border-box",
+              textAlign: "center"
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Warning Icon */}
+            <div style={{
+              width: "56px",
+              height: "56px",
+              background: "rgba(239, 68, 68, 0.1)",
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 16px auto",
+              color: "#ef4444"
+            }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            </div>
+
+            <h3 style={{ fontSize: "1.2rem", fontWeight: "800", color: "var(--text-primary)", margin: "0 0 8px 0" }}>Delete Blog Article?</h3>
+            <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", margin: "0 0 18px 0", lineHeight: "1.5" }}>
+              Are you sure you want to permanently delete <strong style={{ color: "var(--text-primary)" }}>"{deletingPost.title}"</strong>? This will remove the article from database, sitemaps, and search feeds. This action is irreversible.
+            </p>
+
+            {/* Actions */}
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
+              <button
+                type="button"
+                onClick={() => setDeletingPost(null)}
+                disabled={savingPost}
+                style={{
+                  background: "none",
+                  border: "1px solid var(--border-subtle)",
+                  color: "var(--text-secondary)",
+                  padding: "10px",
+                  borderRadius: "8px",
+                  fontSize: "0.88rem",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  flex: 1
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteConfirm}
+                disabled={savingPost}
+                style={{
+                  background: "#ef4444",
+                  color: "white",
+                  border: "none",
+                  padding: "10px",
+                  borderRadius: "8px",
+                  fontSize: "0.88rem",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  flex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px",
+                  boxShadow: "0 4px 14px rgba(239, 68, 68, 0.25)"
+                }}
+              >
+                {savingPost ? (
+                  <>
+                    <div className="spinner" style={{ width: "14px", height: "14px", borderWidth: "2px", borderTopColor: "#ffffff" }} />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <span>Delete Permanently</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification Banner */}
+      {toast && (
+        <div
+          className="toast-slide-in"
+          style={{
+            position: "fixed",
+            bottom: "24px",
+            right: "24px",
+            background: toast.type === "success" ? "rgba(16, 185, 129, 0.95)" : "rgba(239, 68, 68, 0.95)",
+            backdropFilter: "blur(10px)",
+            color: "#ffffff",
+            padding: "12px 24px",
+            borderRadius: "12px",
+            boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+            border: "1px solid rgba(255, 255, 255, 0.15)",
+            zIndex: 99999,
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            fontSize: "0.9rem",
+            fontWeight: "600"
+          }}
+        >
+          {toast.type === "success" ? (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          ) : (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+          )}
+          <span>{toast.message}</span>
+        </div>
+      )}
 
     </div>
   );
