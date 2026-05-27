@@ -31,6 +31,9 @@ export default function AdminPanel({ onSyncComplete }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchedTerm, setSearchedTerm] = useState("");
 
+  // Headline Hover Preview State
+  const [hoveredHeadline, setHoveredHeadline] = useState(null);
+
   // Drag and Drop States
   const [draggedIndex, setDraggedIndex] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
@@ -925,6 +928,13 @@ export default function AdminPanel({ onSyncComplete }) {
           .modal-scale-in {
             animation: modalScale 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
           }
+          .tooltip-scale-in {
+            animation: tooltipScaleIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          }
+          @keyframes tooltipScaleIn {
+            from { transform: scale(0.95) translateY(5px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
+          }
         `}} />
 
         {/* Premium Selection Split-Screen Layout */}
@@ -961,6 +971,23 @@ export default function AdminPanel({ onSyncComplete }) {
                     <div
                       key={headline.title}
                       onClick={() => !bulkGenerating && handleToggleSelect(headline)}
+                      onMouseEnter={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setHoveredHeadline({
+                          title: headline.title,
+                          description: headline.description,
+                          source: headline.source,
+                          publishedAt: headline.publishedAt,
+                          rect: {
+                            left: rect.left,
+                            top: rect.top,
+                            bottom: rect.bottom,
+                            width: rect.width,
+                            height: rect.height
+                          }
+                        });
+                      }}
+                      onMouseLeave={() => setHoveredHeadline(null)}
                       style={{
                         display: "flex",
                         alignItems: "center",
@@ -1404,6 +1431,83 @@ export default function AdminPanel({ onSyncComplete }) {
             )}
           </div>
         </div>
+
+        {/* Dynamic Translucent Floating Preview Tooltip */}
+        {hoveredHeadline && (() => {
+          const tooltipOnTop = hoveredHeadline.rect.top > 250;
+          const tooltipTop = tooltipOnTop
+            ? hoveredHeadline.rect.top - 8
+            : hoveredHeadline.rect.bottom + 8;
+          const tooltipTransform = tooltipOnTop
+            ? "translateY(-100%)"
+            : "none";
+
+          return (
+            <div
+              className="tooltip-scale-in"
+              style={{
+                position: "fixed",
+                left: `${hoveredHeadline.rect.left}px`,
+                top: `${tooltipTop}px`,
+                transform: tooltipTransform,
+                width: `${hoveredHeadline.rect.width}px`,
+                maxWidth: "500px",
+                backgroundColor: "rgba(15, 23, 42, 0.96)",
+                backdropFilter: "blur(8px)",
+                color: "#ffffff",
+                padding: "16px",
+                borderRadius: "12px",
+                boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.2)",
+                zIndex: 99999,
+                pointerEvents: "none",
+                border: "1px solid rgba(255, 255, 255, 0.12)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px"
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{
+                  fontSize: "0.72rem",
+                  background: "rgba(255, 255, 255, 0.12)",
+                  padding: "2px 8px",
+                  borderRadius: "6px",
+                  fontWeight: "600",
+                  color: "#cbd5e1",
+                  border: "1px solid rgba(255, 255, 255, 0.08)"
+                }}>
+                  {hoveredHeadline.source || "News Desk"}
+                </span>
+                <span style={{ fontSize: "0.7rem", color: "#94a3b8" }}>
+                  {new Date(hoveredHeadline.publishedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                </span>
+              </div>
+
+              <h4 style={{
+                fontSize: "0.92rem",
+                fontWeight: "700",
+                margin: 0,
+                color: "#ffffff",
+                lineHeight: "1.4",
+                letterSpacing: "-0.01em"
+              }}>
+                {hoveredHeadline.title}
+              </h4>
+
+              <div style={{ height: "1px", background: "rgba(255, 255, 255, 0.1)" }} />
+
+              <p style={{
+                fontSize: "0.82rem",
+                color: "#94a3b8",
+                margin: 0,
+                lineHeight: "1.5",
+                fontWeight: "400"
+              }}>
+                {hoveredHeadline.description || "Latest trending headline update."}
+              </p>
+            </div>
+          );
+        })()}
       </div>
 
 

@@ -48,6 +48,7 @@ export default function Navbar() {
 
   const navLinks = [
     { label: "Home", href: "/" },
+    { label: "Tech Dashboard", href: "/tech-dashboard" }
   ];
 
   return (
