@@ -8,9 +8,9 @@ import SafeAdSlot from "../../components/seo/SafeAdSlot";
 export const metadata = {
   title: "NewsAdda — Trusted & Fast News",
   description:
-    "Stay ahead with real-time, trusted, and fast technology, cricket, fashion, and politics updates, monetized with Google AdSense.",
+    "Stay updated with real-time news, cricket, technology, politics, entertainment, and trending stories from India and around the world.",
   keywords:
-    "tech news, trusted news, fast news, Next.js SEO, news blog, AdSense monetization, cricket, fashion, politics",
+    "tech news, trusted news, fast news, latest news, trending news, news blog, cricket, fashion, politics",
   openGraph: {
     title: "NewsAdda — Trusted & Fast News",
     description: "Real-time updates, trusted and fast news.",
