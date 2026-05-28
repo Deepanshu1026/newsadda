@@ -1195,3 +1195,241 @@ a {
   }
 }
 
+/* ─── Sticky Bottom Premium Display Ad ───────────────────────── */
+
+.sticky-bottom-ad-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  width: 100%;
+  pointer-events: none; /* Let clicks pass through empty spaces around the floating container */
+  display: flex;
+  justify-content: center;
+  padding: 0 16px;
+  animation: slideAdUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideAdUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.sticky-bottom-ad-wrapper {
+  pointer-events: auto; /* Re-enable pointer events for the banner itself */
+  width: 100%;
+  max-width: 970px; /* Leaderboard standard widescreen width plus padding */
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-subtle);
+  border-bottom: none;
+  box-shadow: 0 -12px 36px rgba(15, 23, 42, 0.08), 0 -4px 10px rgba(15, 23, 42, 0.02);
+  border-radius: 16px 16px 0 0;
+  padding: 8px 16px 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sticky-bottom-ad-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.sponsored-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.sticky-bottom-ad-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sandbox-toggle-btn {
+  background: var(--accent-primary-glow);
+  border: 1px solid rgba(79, 70, 229, 0.15);
+  color: var(--accent-primary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all 0.2s ease;
+}
+
+.sandbox-toggle-btn:hover {
+  background: var(--accent-primary);
+  color: white;
+  border-color: var(--accent-primary);
+}
+
+.sticky-bottom-ad-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.sticky-bottom-ad-close:hover {
+  background: rgba(15, 23, 42, 0.06);
+  color: var(--text-primary);
+  transform: rotate(90deg);
+}
+
+.sticky-bottom-ad-content {
+  width: 100%;
+  min-height: 50px;
+  max-height: 100px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Simulated display ad placeholder */
+.simulated-sticky-ad {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 50px;
+  padding: 0 12px;
+  background: rgba(15, 23, 42, 0.02);
+  border: 1px dashed var(--border-subtle);
+  border-radius: 8px;
+  font-family: var(--font-body);
+}
+
+.ad-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ad-brand-logo {
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-purple));
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.2);
+}
+
+.ad-brand-info {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.ad-brand-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.ad-brand-desc {
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+}
+
+.ad-badge-preview {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent-purple);
+  background: rgba(124, 58, 237, 0.08);
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(124, 58, 237, 0.15);
+}
+
+.ad-cta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.ad-meta-text {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-family: monospace;
+}
+
+.ad-cta-btn {
+  background: var(--text-primary);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.ad-cta-btn:hover {
+  background: var(--accent-primary);
+  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.25);
+  transform: translateY(-1px);
+}
+
+/* Responsive adjustments for mobile devices */
+@media (max-width: 768px) {
+  .sticky-bottom-ad-container {
+    padding: 0;
+  }
+  
+  .sticky-bottom-ad-wrapper {
+    max-width: 100%;
+    border-radius: 12px 12px 0 0;
+    padding: 6px 12px 10px 12px;
+  }
+  
+  .simulated-sticky-ad {
+    flex-direction: row;
+    height: 50px;
+    padding: 0 8px;
+  }
+  
+  .ad-brand-desc, .ad-badge-preview, .ad-meta-text {
+    display: none; /* Hide non-critical preview text elements on mobile screens */
+  }
+  
+  .ad-brand-logo {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .ad-brand-name {
+    font-size: 0.78rem;
+  }
+  
+  .ad-cta-btn {
+    padding: 4px 10px;
+    font-size: 0.7rem;
+  }
+}
+
+

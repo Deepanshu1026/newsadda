@@ -4,6 +4,7 @@ import Script from "next/script";
 import Image from "next/image";
 import Navbar from "../../components/Navbar";
 import SafeAdSlot from "../../components/seo/SafeAdSlot";
+import StickyBottomAd from "../../components/StickyBottomAd";
 
 export const metadata = {
   title: "NewsAdda — Trusted & Fast News",
@@ -117,6 +118,9 @@ export default function RootLayout({ children }) {
             </div>
           </footer>
         </div>
+
+        {/* Floating Premium Sticky Bottom Display Ad */}
+        <StickyBottomAd />
       </body>
     </html>
   );
