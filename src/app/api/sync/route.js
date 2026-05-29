@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { fetchLatestNews } from "../../../../services/newsService";
-import { generateBlogArticle, generateHindiBlogArticle } from "../../../../services/sarvamService";
+import { generateBlogArticle, generateHindiBlogArticle, generateHinglishBlogArticle } from "../../../../services/sarvamService";
 import { readDatabase, writeDatabase } from "../../../../services/db";
 
 function getCategoryImage(category) {
@@ -79,7 +79,9 @@ export async function POST() {
       if (addedCount >= maxPostsToGenerate) break;
 
       const isHindi = category.startsWith("hi-");
-      const newsCategory = isHindi ? category.replace("hi-", "") : category;
+      const isHinglish = category.startsWith("hinglish-");
+      const newsCategory = isHindi ? category.replace("hi-", "") : isHinglish ? category.replace("hinglish-", "") : category;
+      const language = isHindi ? "hi" : isHinglish ? "hinglish" : "en";
 
       console.log(`[Sync API] Querying headlines for category: ${category}`);
       const headlines = await fetchLatestNews(newsCategory);
@@ -89,28 +91,38 @@ export async function POST() {
 
         const titleExists = posts.some(
           (p) =>
-            (p.language || "en") === (isHindi ? "hi" : "en") &&
+            (p.language || "en") === language &&
             (p.title.toLowerCase().trim() === headline.title.toLowerCase().trim() ||
              isSimilarTitle(p.title, headline.title))
         );
         if (titleExists) {
-          console.log(`[Sync API] Skipping duplicate/similar headline [${isHindi ? "hi" : "en"}]: ${headline.title}`);
+          console.log(`[Sync API] Skipping duplicate/similar headline [${language}]: ${headline.title}`);
           continue;
         }
 
-        console.log(`[Sync API] Processing new headline [${isHindi ? "hi" : "en"}]: ${headline.title}`);
+        console.log(`[Sync API] Processing new headline [${language}]: ${headline.title}`);
 
-        // Generate content (Hindi or English)
-        let content = isHindi
-          ? await generateHindiBlogArticle(headline.title, headline.description, newsCategory)
-          : await generateBlogArticle(headline.title, headline.description, newsCategory);
+        // Generate content (English, Hindi, or Hinglish)
+        let content;
+        if (language === "hi") {
+          content = await generateHindiBlogArticle(headline.title, headline.description, newsCategory);
+        } else if (language === "hinglish") {
+          content = await generateHinglishBlogArticle(headline.title, headline.description, newsCategory);
+        } else {
+          content = await generateBlogArticle(headline.title, headline.description, newsCategory);
+        }
 
         // Guard against incomplete / too-short generations: retry once if needed
         if (!isContentComplete(content)) {
           console.warn("[Sync API] Content looks incomplete. Retrying generation once...");
-          const retryContent = isHindi
-            ? await generateHindiBlogArticle(headline.title, headline.description, newsCategory)
-            : await generateBlogArticle(headline.title, headline.description, newsCategory);
+          let retryContent;
+          if (language === "hi") {
+            retryContent = await generateHindiBlogArticle(headline.title, headline.description, newsCategory);
+          } else if (language === "hinglish") {
+            retryContent = await generateHinglishBlogArticle(headline.title, headline.description, newsCategory);
+          } else {
+            retryContent = await generateBlogArticle(headline.title, headline.description, newsCategory);
+          }
           if (isContentComplete(retryContent)) {
             content = retryContent;
           } else {
@@ -123,7 +135,7 @@ export async function POST() {
           .replace(/[^a-z0-9\u0900-\u097F]+/g, "-") // allow Devanagari for slug safety
           .replace(/(^-|-$)/g, "");
 
-        if (!slug) slug = isHindi ? `hi-${Date.now()}` : `post-${Date.now()}`;
+        if (!slug) slug = `${language === "hi" ? "hi" : language === "hinglish" ? "hinglish" : "post"}-${Date.now()}`;
         if (posts.some((p) => p.id === slug)) {
           slug = `${slug}-${Date.now().toString().slice(-4)}`;
         }

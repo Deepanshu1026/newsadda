@@ -225,6 +225,85 @@ We will continue to update this article as more information and details are offi
 * **${keyword1} ${keyword3} Updates**`;
 }
 
+// --- Hinglish blog generator ---
+export async function generateHinglishBlogArticle(title, description, category = "Technology") {
+  const apiKey = process.env.SARVAM_API_KEY;
+  const modelName = process.env.SARVAM_MODEL || "sarvam-105b";
+
+  const searchContext = await getSearchContext(title, "en"); // Hinglish uses English news search
+
+  if (!apiKey) {
+    console.log("[Sarvam Service] SARVAM_API_KEY is missing. Generating Hinglish fallback Markdown article.");
+    return generateHinglishFallbackMarkdown(title, description, category, searchContext);
+  }
+
+  const prompt = `
+You are an expert Indian digital journalist and SEO specialist writing for NewsAdda.
+Write a highly engaging, detailed, and SEO-optimized news blog article in HINGLISH (Hindi language written using Roman/English script) based on the following details:
+
+Category: ${category}
+Headline Title: ${title}
+Short Summary: ${description}
+
+${searchContext ? `Here is the real-time background search coverage we fetched for this headline. Use these actual facts, details, and context to enrich your article:\n\n${searchContext}\n` : ""}
+
+CRITICAL INSTRUCTIONS FOR COMPLETENESS & SEO:
+1. The article MUST be a thorough read of **at least 500 to 800 words** in total. Do NOT get cut off. Write a proper concluding paragraph.
+2. Format the entire article in clean, professional Markdown.
+3. Use descriptive subheadings (###) in Hinglish style.
+4. Use bold text, bullet points (1., *), and a high-quality blockquote (> ) to make the post highly readable.
+5. Identify 4-6 highly relevant, trending SEO keywords. Integrate these naturally with high density. Keywords should also be in Hinglish (e.g., "cricket news hindi", "india latest update", "trending khabar").
+6. Add a list of "Trending SEO Keywords" in a clean bulleted list at the very bottom of the post.
+7. Do NOT include the main title or the category as a header in your output. Start directly with the introduction.
+8. Write in a conversational, authentic Hinglish tone that Indian readers love — use natural phrases like "aapko batana chahunga", "yeh decision bahut bada hai", "desh bhar mein log is baat ko lekar excited hain", etc. Mix English and Hindi naturally, the way Indians actually speak and read online news.
+9. The tone should be authoritative yet friendly, like a popular Indian news YouTuber or digital journalist.
+`;
+
+  const callApi = async (targetModel, maxTokens) => {
+    return fetch("https://api.sarvam.ai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "api-subscription-key": apiKey
+      },
+      body: JSON.stringify({
+        model: targetModel,
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: maxTokens,
+        reasoning_effort: "low",
+        temperature: 0.7
+      })
+    });
+  };
+
+  try {
+    console.log(`[Sarvam Service] Calling Sarvam AI API (Hinglish) using model: ${modelName} with max_tokens: 4096`);
+    let response = await callApi(modelName, 4096);
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.warn(`[Sarvam Service] Hinglish API returned status ${response.status}: ${errText}. Attempting secondary model fallback.`);
+      const secondaryModel = modelName === "sarvam-105b" ? "sarvam-30b" : "sarvam-105b";
+      response = await callApi(secondaryModel, 4096);
+    }
+
+    if (!response.ok) {
+      return generateHinglishFallbackMarkdown(title, description, category, searchContext);
+    }
+
+    const data = await response.json();
+    const text = data.choices?.[0]?.message?.content;
+    if (!text || text.trim().length < 400) {
+      console.warn("[Sarvam Service] Hinglish generated text too short or empty, falling back.");
+      return generateHinglishFallbackMarkdown(title, description, category, searchContext);
+    }
+    return text;
+  } catch (error) {
+    console.error("[Sarvam Service] Error calling Sarvam AI API for Hinglish:", error.message);
+    return generateHinglishFallbackMarkdown(title, description, category, searchContext);
+  }
+}
+
 // --- Hindi fallback ---
 function generateHindiFallbackMarkdown(title, description, category, searchContext = "") {
   const cleanTitle = title.replace(/[^\w\s]/gi, "");
@@ -278,4 +357,59 @@ ${contextSection}
 * **${category} trends 2026**
 * **भारत ${keyword2} समाचार**
 * **${keyword1} ${keyword3} अपडेट्स**`;
+}
+
+// --- Hinglish fallback ---
+function generateHinglishFallbackMarkdown(title, description, category, searchContext = "") {
+  const cleanTitle = title.replace(/[^\w\s]/gi, "");
+  const keywords = cleanTitle.split(/\s+/).filter((w) => w.length > 3);
+  const keyword1 = keywords[0] || "India";
+  const keyword2 = keywords[1] || "Trending";
+  const keyword3 = keywords[2] || "Update";
+
+  let contextSection = "";
+  if (searchContext && searchContext.trim().length > 0) {
+    contextSection = `### Real-Time Investigations & Search Analysis\n\nDesh bhar ke news outlets ne is event ki coverage ki hai aur kuch important details samne aayi hain:\n\n`;
+    const items = searchContext.split("\n\n").filter((x) => x.includes("Title:"));
+    items.forEach((item, idx) => {
+      const lines = item.split("\n");
+      const subTitle = lines[0].replace("[News Coverage #" + (idx + 1) + "] Title: ", "").replace("Title: ", "").trim();
+      const subDesc = lines[1].replace("Context: ", "").replace("Description: ", "").trim();
+      contextSection += `#### ${idx + 1}. ${subTitle}\n${subDesc}\n\n`;
+    });
+  } else {
+    contextSection = `### Real-Time Investigations & Search Analysis\n\nReal-time mein secondary web search context nahi mil saka, lekin field reports se pata chalta hai ki public reaction bade scale par hai. Observers ka kehna hai ki regulatory bodies aur policy specialists currently updated responses banane ke liye standard guidelines ko review kar rahe hain.\n\n`;
+  }
+
+  return `### Comprehensive Analysis: ${title}
+
+**${title}** ke baare mein latest update **${category}** mein interest rakhne wale local stakeholders aur readers ke liye ek major shift ka sanket deta hai. Yeh development—*"${description}"* ke roop mein summarized—naye trends aur badalte patterns ko ujagar karta hai, jisse tez public discussions aur media coverage hui hai.
+
+Jaise-jaise hum ye major shifts dekhte hain, expert analysts structural factors ko samajhne ke mahatva par zor dete hain. Chahe legislative policies par vichar karna ho, social impacts par, ya cultural changes par, local context final outcome ko shape karne mein ek smarakiya bhumika nibhata hai.
+
+${contextSection}
+### Core Dynamics and Indian Context
+
+Yeh samajhne ke liye ki yeh desh bhar mein itna important discussion ka topic kyun ban gaya hai, humein un major factors ko dekhna hoga jo public narrative ko shape kar rahe hain:
+
+1. **High Public Engagement:** Is topic ne digital platforms par extensive conversations produce ki hain, jo public ki strong interest ko darshati hain. Citizens transparency aur immediate action ki demand kar rahe hain.
+2. **Dynamic Cultural Shift:** Modern Indian audiences in kahaniyon ko kaise consume karte hain aur unse judte hain, yeh cultural expectations aur awareness mein tez transformation darshata hai.
+3. **Socio-Economic Relevance:** Yeh trending headline ke direct impact consumer behaviors, community guidelines, ya institutional protocols par padte hain, jisse turant adaptation ki zaroorat hoti hai.
+
+> "Yeh trending kahani India mein ${category.toLowerCase()} development ko kaise interpret karte hain, usmein ek naye adhyay ka prateek hai. Iske impact ka paimana vishaal hai aur yeh deerghkalik badlav ka sanket deta hai."
+
+### Strategic Implications and Future Outlook
+
+Aage badte hue, businesses, content creators, aur policy coordinators ko in updates ke anurup adapt karna hoga. For example, in highlights ke around targeted campaigns bana kar effectively organic search trends ko capture kiya ja sakta hai. High-quality coverage maintain karne se ek bheedbhad wale digital landscape mein credibility aur vishwas sunishchit hota hai.
+
+Jaise-jaise situation viksit hoti hai, hum industry representatives aur legal authorities se aage ke bayanon aur public pratikriyayon ki ummeed karte hain. In badlavon ke liye turant roop se adapt hone ke liye kshetra mein ubharte huye pratimanon ki gehri saraahna ki aavashyakta hoti hai.
+
+Hum is lekh ko adhik jaankari aur vivaranon ke saath update karte rahenge jaise hi sakriya samnvayakon dwara aadhikarik roop se jari kiye jaate hain.
+
+### Trending SEO Keywords:
+* **${keyword1} India**
+* **${title.split(" ").slice(0, 3).join(" ")}**
+* **${category} trends 2026**
+* **India ${keyword2} news**
+* **${keyword1} ${keyword3} updates**`;
 }

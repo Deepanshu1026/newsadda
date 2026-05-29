@@ -76,7 +76,10 @@ export default async function HindiArticlePage({ params }) {
     notFound();
   }
 
-  // Redirect non-Hindi articles back to the English URL
+  // Redirect Hinglish and non-Hindi articles to their correct URLs
+  if (post.language === "hinglish") {
+    redirect(`/hinglish/posts/${id}`);
+  }
   if (post.language !== "hi") {
     redirect(`/posts/${id}`);
   }

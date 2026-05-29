@@ -1391,6 +1391,24 @@ export default function AdminPanel({ onSyncComplete }) {
                 >
                   Hindi
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setGenerationLanguage("hinglish")}
+                  disabled={bulkGenerating}
+                  style={{
+                    padding: "4px 10px",
+                    borderRadius: "6px",
+                    fontSize: "0.78rem",
+                    fontWeight: "700",
+                    border: generationLanguage === "hinglish" ? "1px solid #0f172a" : "1px solid var(--border-subtle)",
+                    background: generationLanguage === "hinglish" ? "#0f172a" : "transparent",
+                    color: generationLanguage === "hinglish" ? "#fff" : "var(--text-secondary)",
+                    cursor: bulkGenerating ? "not-allowed" : "pointer",
+                    transition: "all 0.2s ease"
+                  }}
+                >
+                  Hinglish
+                </button>
               </div>
 
               <button

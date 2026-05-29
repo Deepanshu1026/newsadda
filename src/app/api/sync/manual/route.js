@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { generateBlogArticle, generateHindiBlogArticle } from "../../../../../services/sarvamService";
+import { generateBlogArticle, generateHindiBlogArticle, generateHinglishBlogArticle } from "../../../../../services/sarvamService";
 import { readDatabase, writeDatabase } from "../../../../../services/db";
 
 function getCategoryImage(category) {
@@ -48,7 +48,8 @@ export async function POST(request) {
       );
     }
 
-    console.log(`[Manual Sync API] Bulk generating ${language === "hi" ? "Hindi" : "English"} blogs for ${articles.length} selected articles...`);
+    const langLabel = language === "hi" ? "Hindi" : language === "hinglish" ? "Hinglish" : "English";
+    console.log(`[Manual Sync API] Bulk generating ${langLabel} blogs for ${articles.length} selected articles...`);
 
     // Read existing database
     let posts = await readDatabase();
@@ -71,10 +72,15 @@ export async function POST(request) {
 
       console.log(`[Manual Sync API] Writing [${language}] article via Sarvam: ${title}`);
 
-      // 2. Generate blog content via Sarvam (English or Hindi)
-      const content = language === "hi"
-        ? await generateHindiBlogArticle(title, description, category)
-        : await generateBlogArticle(title, description, category);
+      // 2. Generate blog content via Sarvam (English, Hindi, or Hinglish)
+      let content;
+      if (language === "hi") {
+        content = await generateHindiBlogArticle(title, description, category);
+      } else if (language === "hinglish") {
+        content = await generateHinglishBlogArticle(title, description, category);
+      } else {
+        content = await generateBlogArticle(title, description, category);
+      }
 
       // 3. Create clean URL slug (supports Devanagari for Hindi)
       let slug = title
@@ -82,7 +88,7 @@ export async function POST(request) {
         .replace(/[^a-z0-9\u0900-\u097F]+/g, "-")
         .replace(/(^-|-$)/g, "");
 
-      if (!slug) slug = `${language === "hi" ? "hi" : "post"}-${Date.now()}`;
+      if (!slug) slug = `${language === "hi" ? "hi" : language === "hinglish" ? "hinglish" : "post"}-${Date.now()}`;
       if (posts.some(p => p.id === slug)) {
         slug = `${slug}-${Date.now().toString().slice(-4)}`;
       }
