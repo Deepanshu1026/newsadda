@@ -81,17 +81,25 @@ function parseMarkdownToReact(text) {
     }
 
     // Handle Headings with clean id parameters for Table of Contents linkage
-    if (line.startsWith("### ")) {
+    if (line.startsWith("##### ")) {
+      const titleText = line.replace("##### ", "").trim();
+      const headingId = titleText.toLowerCase().replace(/[^a-z0-9\u0900-\u097F]+/g, "-");
+      elements.push(<h5 key={keyIndex} id={headingId} style={{ fontSize: "1.15rem", fontWeight: "700", marginTop: "20px", marginBottom: "10px" }}>{titleText}</h5>);
+    } else if (line.startsWith("#### ")) {
+      const titleText = line.replace("#### ", "").trim();
+      const headingId = titleText.toLowerCase().replace(/[^a-z0-9\u0900-\u097F]+/g, "-");
+      elements.push(<h4 key={keyIndex} id={headingId} style={{ fontSize: "1.25rem", fontWeight: "700", marginTop: "22px", marginBottom: "10px" }}>{titleText}</h4>);
+    } else if (line.startsWith("### ")) {
       const titleText = line.replace("### ", "").trim();
-      const headingId = titleText.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      const headingId = titleText.toLowerCase().replace(/[^a-z0-9\u0900-\u097F]+/g, "-");
       elements.push(<h3 key={keyIndex} id={headingId} style={{ fontSize: "1.4rem", fontWeight: "700", marginTop: "24px", marginBottom: "12px" }}>{titleText}</h3>);
     } else if (line.startsWith("## ")) {
       const titleText = line.replace("## ", "").trim();
-      const headingId = titleText.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      const headingId = titleText.toLowerCase().replace(/[^a-z0-9\u0900-\u097F]+/g, "-");
       elements.push(<h2 key={keyIndex} id={headingId} style={{ fontSize: "1.8rem", fontWeight: "800", marginTop: "28px", marginBottom: "16px" }}>{titleText}</h2>);
     } else if (line.startsWith("# ")) {
       const titleText = line.replace("# ", "").trim();
-      const headingId = titleText.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      const headingId = titleText.toLowerCase().replace(/[^a-z0-9\u0900-\u097F]+/g, "-");
       elements.push(<h1 key={keyIndex} id={headingId} style={{ fontSize: "2.2rem", fontWeight: "800", marginTop: "32px", marginBottom: "20px" }}>{titleText}</h1>);
     }
     // Handle Blockquotes

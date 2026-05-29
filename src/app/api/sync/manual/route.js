@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { generateBlogArticle } from "../../../../../services/sarvamService";
+import { generateBlogArticle, generateHindiBlogArticle } from "../../../../../services/sarvamService";
 import { readDatabase, writeDatabase } from "../../../../../services/db";
 
 function getCategoryImage(category) {
@@ -39,8 +39,8 @@ function getCategoryImage(category) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { articles } = body;
-    
+    const { articles, language = "en" } = body;
+
     if (!articles || !Array.isArray(articles) || articles.length === 0) {
       return NextResponse.json(
         { success: false, error: "No articles provided for generation" },
@@ -48,8 +48,8 @@ export async function POST(request) {
       );
     }
 
-    console.log(`[Manual Sync API] Bulk generating blogs for ${articles.length} selected articles...`);
-    
+    console.log(`[Manual Sync API] Bulk generating ${language === "hi" ? "Hindi" : "English"} blogs for ${articles.length} selected articles...`);
+
     // Read existing database
     let posts = await readDatabase();
     let generatedCount = 0;
@@ -57,25 +57,32 @@ export async function POST(request) {
 
     for (const article of articles) {
       const { title, description, category, image, author } = article;
-      
-      // 1. Double check for duplicates
-      const titleExists = posts.some(p => p.title.toLowerCase().trim() === title.toLowerCase().trim());
+
+      // 1. Double check for duplicates in same language
+      const titleExists = posts.some(
+        p =>
+          p.title.toLowerCase().trim() === title.toLowerCase().trim() &&
+          (p.language || "en") === language
+      );
       if (titleExists) {
-        console.log(`[Manual Sync API] Skipping duplicate article: ${title}`);
+        console.log(`[Manual Sync API] Skipping duplicate article [${language}]: ${title}`);
         continue;
       }
 
-      console.log(`[Manual Sync API] Writing article via Sarvam: ${title}`);
-      
-      // 2. Generate blog content via Sarvam
-      const content = await generateBlogArticle(title, description, category);
-      
-      // 3. Create clean URL slug
+      console.log(`[Manual Sync API] Writing [${language}] article via Sarvam: ${title}`);
+
+      // 2. Generate blog content via Sarvam (English or Hindi)
+      const content = language === "hi"
+        ? await generateHindiBlogArticle(title, description, category)
+        : await generateBlogArticle(title, description, category);
+
+      // 3. Create clean URL slug (supports Devanagari for Hindi)
       let slug = title
         .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/[^a-z0-9\u0900-\u097F]+/g, "-")
         .replace(/(^-|-$)/g, "");
-        
+
+      if (!slug) slug = `${language === "hi" ? "hi" : "post"}-${Date.now()}`;
       if (posts.some(p => p.id === slug)) {
         slug = `${slug}-${Date.now().toString().slice(-4)}`;
       }
@@ -90,7 +97,8 @@ export async function POST(request) {
         publishedAt: new Date().toISOString(),
         readTime: `${Math.max(3, Math.ceil(content.split(/\s+/).length / 200))} min read`,
         views: 0,
-        author: author || "NewsAdda India Desk"
+        author: author || "NewsAdda India Desk",
+        language
       };
 
       // 4. Prepend to current list

@@ -26,6 +26,7 @@ export default function AdminPanel({ onSyncComplete }) {
   const [bulkGenerating, setBulkGenerating] = useState(false);
   const [bulkLogs, setBulkLogs] = useState([]);
   const [bulkStatus, setBulkStatus] = useState("");
+  const [generationLanguage, setGenerationLanguage] = useState("en"); // 'en' or 'hi'
   // Client-side cache to avoid repeated queries and preserve API quota
   const [cachedHeadlines, setCachedHeadlines] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
@@ -341,7 +342,7 @@ export default function AdminPanel({ onSyncComplete }) {
       const res = await fetch("/api/sync/manual", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ articles: articlesToSend })
+        body: JSON.stringify({ articles: articlesToSend, language: generationLanguage })
       });
 
       if (res.ok) {
@@ -1351,6 +1352,47 @@ export default function AdminPanel({ onSyncComplete }) {
 
             {/* Queue triggers */}
             <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "4px" }}>
+              {/* Language Toggle */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginBottom: "4px" }}>
+                <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: "600" }}>Language:</span>
+                <button
+                  type="button"
+                  onClick={() => setGenerationLanguage("en")}
+                  disabled={bulkGenerating}
+                  style={{
+                    padding: "4px 10px",
+                    borderRadius: "6px",
+                    fontSize: "0.78rem",
+                    fontWeight: "700",
+                    border: generationLanguage === "en" ? "1px solid #0f172a" : "1px solid var(--border-subtle)",
+                    background: generationLanguage === "en" ? "#0f172a" : "transparent",
+                    color: generationLanguage === "en" ? "#fff" : "var(--text-secondary)",
+                    cursor: bulkGenerating ? "not-allowed" : "pointer",
+                    transition: "all 0.2s ease"
+                  }}
+                >
+                  English
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setGenerationLanguage("hi")}
+                  disabled={bulkGenerating}
+                  style={{
+                    padding: "4px 10px",
+                    borderRadius: "6px",
+                    fontSize: "0.78rem",
+                    fontWeight: "700",
+                    border: generationLanguage === "hi" ? "1px solid #0f172a" : "1px solid var(--border-subtle)",
+                    background: generationLanguage === "hi" ? "#0f172a" : "transparent",
+                    color: generationLanguage === "hi" ? "#fff" : "var(--text-secondary)",
+                    cursor: bulkGenerating ? "not-allowed" : "pointer",
+                    transition: "all 0.2s ease"
+                  }}
+                >
+                  Hindi
+                </button>
+              </div>
+
               <button
                 className="btn-primary"
                 onClick={handleBulkGenerate}
