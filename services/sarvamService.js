@@ -32,7 +32,7 @@ export async function generateBlogArticle(title, description, category = "Techno
       ${searchContext ? `Here is the real-time background search coverage we fetched for this headline. Use these actual facts, details, and context to enrich your article:\n\n${searchContext}\n` : ""}
       
       CRITICAL INSTRUCTIONS FOR LENGTH, QUALITY & SEO:
-      1. The article MUST be comprehensive, detailed, and extremely long-form (at least 800 to 1,200 words). Do NOT summarize or write a brief overview.
+      1. The article MUST be comprehensive, detailed, and moderately long-form (around 500 to 700 words). It is CRITICAL that you budget your generation length to fully complete the entire article and do not get cut off. Ensure the article is fully written, concluded, and polished.
       2. Format the entire article in clean, professional Markdown.
       3. Use highly descriptive subheadings (###) to separate logical sections (e.g., Background Analysis, Core Dynamics, Key Developments, and Strategic Implications).
       4. Use bold text, bullet points (1., *), and at least one high-quality blockquote (> ) to make the post highly readable and engaging.
