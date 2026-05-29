@@ -41,15 +41,15 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>
-        {/* Google AdSense Auto Ads */}
-        <Script
+      <head>
+        {/* Google AdSense Verification & Auto Ads — raw script required in <head> for crawler visibility */}
+        <script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8945078741780854"
           crossOrigin="anonymous"
-          strategy="afterInteractive"
         />
-
+      </head>
+      <body>
         {/* Google Analytics (gtag.js) */}
         <Script
           async
