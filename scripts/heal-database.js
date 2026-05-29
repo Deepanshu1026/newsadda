@@ -45,7 +45,7 @@ posts.forEach((post, index) => {
   const content = post.content || "";
   const hasKeywords = content.includes("Trending SEO Keywords");
   const endsAbruptly = !content.trim().match(/[.!?*`"]$/) || content.trim().endsWith("The **Supreme Court of") || content.trim().endsWith("Their") || content.trim().endsWith("This") || content.trim().endsWith("personal") || content.trim().endsWith("to");
-  
+
   if (!hasKeywords || endsAbruptly) {
     truncatedIndices.push(index);
   }
@@ -63,17 +63,17 @@ async function healPost(index) {
 
   const prompt = `
 You are an expert Indian journalist and SEO specialist writing for NewsAdda.
-Write an extensive, highly engaging, and SEO-optimized news blog article based on the following details:
+Write a highly engaging, concise, and SEO-optimized news blog article based on the following details:
 
 Category: ${post.category}
 Headline Title: ${post.title}
 Short Summary: ${post.description}
 
-CRITICAL INSTRUCTIONS FOR LENGTH, QUALITY & SEO:
-1. The article MUST be comprehensive, detailed, and moderately long-form (around 500 to 700 words). It is CRITICAL that you budget your generation length to fully complete the entire article and do not get cut off. Ensure the article is fully written, concluded, and polished.
+CRITICAL INSTRUCTIONS FOR COMPLETENESS & SEO:
+1. The article MUST be a concise but high-impact read of exactly 350 to 450 words in total. It is CRITICAL that you complete the entire article and do not get cut off. Ensure the article is fully written, concluded, and polished.
 2. Format the entire article in clean, professional Markdown.
-3. Use highly descriptive subheadings (###) to separate logical sections (e.g., Background Analysis, Core Dynamics, Key Developments, and Strategic Implications).
-4. Use bold text, bullet points (1., *), and at least one high-quality blockquote (> ) to make the post highly readable and engaging.
+3. Use descriptive subheadings (###) to separate sections (e.g., Match Preview/Background, Core Dynamics, and Strategic Outlook/Implications).
+4. Use bold text, bullet points (1., *), and a high-quality blockquote (> ) to make the post highly readable and engaging.
 5. Identify 4-6 highly relevant, trending SEO keywords based on the headline and search context. Integrate these keywords naturally with high density throughout the text to boost trending rank.
 6. Add a list of "Trending SEO Keywords" in a clean bulleted list at the very bottom of the post.
 7. Do NOT include the main title or the category as a header in your output. Start directly with the introduction.
@@ -123,9 +123,9 @@ CRITICAL INSTRUCTIONS FOR LENGTH, QUALITY & SEO:
 async function run() {
   let successCount = 0;
 
-  // For safety and to prevent hitting strict rate limits, we will process up to 10 articles per run.
+  // For safety and to prevent hitting strict rate limits, we will process up to 20 articles per run.
   // The user can run it multiple times if needed, or we can increase it if the first batch succeeds beautifully.
-  const batchLimit = 10;
+  const batchLimit = 20;
   const toProcess = truncatedIndices.slice(0, batchLimit);
 
   console.log(`[Healer] Processing a batch of ${toProcess.length} articles...`);
@@ -147,7 +147,7 @@ async function run() {
       try {
         console.log("[Healer] Writing updated database to Cloud Firestore...");
         const firestoreUrl = `https://firestore.googleapis.com/v1/projects/${firestoreProjectId}/databases/(default)/documents/data/database?key=${firestoreApiKey}&updateMask.fieldPaths=postsJson`;
-        
+
         const payload = {
           fields: {
             postsJson: {

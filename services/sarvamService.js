@@ -23,7 +23,7 @@ export async function generateBlogArticle(title, description, category = "Techno
   try {
     const prompt = `
       You are an expert Indian journalist and SEO specialist writing for NewsAdda.
-      Write an extensive, highly engaging, and SEO-optimized news blog article based on the following details:
+      Write a highly engaging, concise, and SEO-optimized news blog article based on the following details:
       
       Category: ${category}
       Headline Title: ${title}
@@ -31,11 +31,11 @@ export async function generateBlogArticle(title, description, category = "Techno
       
       ${searchContext ? `Here is the real-time background search coverage we fetched for this headline. Use these actual facts, details, and context to enrich your article:\n\n${searchContext}\n` : ""}
       
-      CRITICAL INSTRUCTIONS FOR LENGTH, QUALITY & SEO:
-      1. The article MUST be comprehensive, detailed, and moderately long-form (around 500 to 700 words). It is CRITICAL that you budget your generation length to fully complete the entire article and do not get cut off. Ensure the article is fully written, concluded, and polished.
+      CRITICAL INSTRUCTIONS FOR COMPLETENESS & SEO:
+      1. The article MUST be a concise but high-impact read of exactly 350 to 450 words in total. It is CRITICAL that you budget your generation length to fully complete the entire article and do not get cut off. Ensure the article is fully written, concluded, and polished.
       2. Format the entire article in clean, professional Markdown.
-      3. Use highly descriptive subheadings (###) to separate logical sections (e.g., Background Analysis, Core Dynamics, Key Developments, and Strategic Implications).
-      4. Use bold text, bullet points (1., *), and at least one high-quality blockquote (> ) to make the post highly readable and engaging.
+      3. Use descriptive subheadings (###) to separate sections (e.g., Match Preview/Background, Core Dynamics, and Strategic Outlook/Implications).
+      4. Use bold text, bullet points (1., *), and a high-quality blockquote (> ) to make the post highly readable and engaging.
       5. Identify 4-6 highly relevant, trending SEO keywords based on the headline and search context. Integrate these keywords naturally with high density throughout the text to boost trending rank.
       6. Add a list of "Trending SEO Keywords" in a clean bulleted list at the very bottom of the post.
       7. Do NOT include the main title or the category as a header in your output. Start directly with the introduction.
