@@ -2,13 +2,14 @@ import React from "react";
 import Link from "next/link";
 import { readDatabase } from "../../../../services/db";
 import { SEO_CONFIG, getCanonicalUrl } from "../../../../services/seo/config";
+import { getPostUrl } from "../../../../lib/utils";
 import JsonLd from "../../../../components/seo/JsonLd";
 import { getBreadcrumbSchema, getFaqSchema } from "../../../../services/seo/schema";
 import { getTrendOverview } from "../../../../services/trends/trendFetcher";
 import PerformanceImage from "../../../../components/seo/PerformanceImage";
 import SafeAdSlot from "../../../../components/seo/SafeAdSlot";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 // Generate Programmatic Trend Metadata
 export async function generateMetadata({ params }) {
@@ -133,7 +134,7 @@ export default async function TrendPage({ params }) {
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "24px" }}>
               {matchedPosts.map((post) => (
-                <Link key={post.id} href={`/posts/${post.id}`} style={{ display: "block", textDecoration: "none", color: "inherit" }}>
+                <Link key={post.id} href={getPostUrl(post)} style={{ display: "block", textDecoration: "none", color: "inherit" }}>
                   <article style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                     <PerformanceImage src={post.image} alt={post.title} aspectRatio="16/9" />
                     <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>

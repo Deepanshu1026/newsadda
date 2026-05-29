@@ -1,7 +1,7 @@
-export async function fetchLatestNews(category = "technology") {
+export async function fetchLatestNews(category = "technology", language = "en") {
   const newsApiKey = process.env.NEWS_API_KEY;
   const newsDataApiKey = process.env.NEWSDATA_API_KEY;
-  
+
   if (!newsApiKey && !newsDataApiKey) {
     console.log("[News Service] Both API keys are missing. Utilizing rich fallback feeds.");
     return getFallbackHeadlines(category);
@@ -10,8 +10,8 @@ export async function fetchLatestNews(category = "technology") {
   let newsApiArticles = [];
   let newsDataArticles = [];
 
-  // 1. Query NewsAPI if key is configured
-  if (newsApiKey) {
+  // 1. Query NewsAPI if key is configured (NewsAPI only supports a handful of languages; skip for non-English)
+  if (newsApiKey && language === "en") {
     try {
       const isStandardCategory = ["business", "entertainment", "general", "health", "science", "sports", "technology"].includes(category.toLowerCase());
       let url;
@@ -55,8 +55,8 @@ export async function fetchLatestNews(category = "technology") {
   // 2. Query NewsData.io if key is configured
   if (newsDataApiKey) {
     try {
-      console.log(`[News Service] Querying NewsData.io for category: ${category} (India)`);
-      const url = `https://newsdata.io/api/1/latest?apikey=${newsDataApiKey}&q=${encodeURIComponent(category)}&country=in&language=en`;
+      console.log(`[News Service] Querying NewsData.io for category: ${category} (India, lang=${language})`);
+      const url = `https://newsdata.io/api/1/latest?apikey=${newsDataApiKey}&q=${encodeURIComponent(category)}&country=in&language=${language}`;
       const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
@@ -228,7 +228,7 @@ function getFallbackHeadlines(category) {
   return techFallbacks;
 }
 
-export async function searchNewsForHeadline(headline) {
+export async function searchNewsForHeadline(headline, language = "en") {
   const newsApiKey = process.env.NEWS_API_KEY;
   const newsDataApiKey = process.env.NEWSDATA_API_KEY;
 
@@ -247,11 +247,11 @@ export async function searchNewsForHeadline(headline) {
 
   if (!query) return [];
 
-  console.log(`[News Service] Performing background search for: "${query}"`);
+  console.log(`[News Service] Performing background search for: "${query}" (lang=${language})`);
   let articles = [];
 
-  // Try NewsAPI everything search
-  if (newsApiKey) {
+  // Try NewsAPI everything search (NewsAPI only supports limited languages; skip for non-English)
+  if (newsApiKey && language === "en") {
     try {
       const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&language=en&sortBy=relevance&pageSize=4&apiKey=${newsApiKey}`;
       const response = await fetch(url);
@@ -273,7 +273,7 @@ export async function searchNewsForHeadline(headline) {
   // Fallback to NewsData search if needed
   if (articles.length === 0 && newsDataApiKey) {
     try {
-      const url = `https://newsdata.io/api/1/latest?apikey=${newsDataApiKey}&q=${encodeURIComponent(query)}&language=en`;
+      const url = `https://newsdata.io/api/1/latest?apikey=${newsDataApiKey}&q=${encodeURIComponent(query)}&language=${language}`;
       const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();

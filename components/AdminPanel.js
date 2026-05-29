@@ -8,7 +8,7 @@ export default function AdminPanel({ onSyncComplete }) {
   const [stats, setStats] = useState({
     totalPosts: 0,
     lastSync: null,
-    cronActive: true,
+    manualMode: true,
     interval: 60,
     categories: []
   });
@@ -492,8 +492,8 @@ export default function AdminPanel({ onSyncComplete }) {
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", alignItems: "center" }}>
             <div className="sync-status-indicator">
-              <div className={`status-dot ${stats.cronActive ? "active" : ""}`} />
-              <span>Dev Cron Daemon: {stats.cronActive ? "Active" : "Offline"}</span>
+              <div className={`status-dot ${stats.manualMode ? "active" : ""}`} />
+              <span>Mode: Manual Sync</span>
             </div>
             <div className="sync-status-indicator" style={{
               background: stats.firestoreStatus && stats.firestoreStatus !== "none"

@@ -37,12 +37,11 @@ export async function GET() {
     return NextResponse.json({
       totalPosts: posts.length,
       lastSync,
-      cronActive: global.cronDaemonActive !== false, // Defaults to active
+      manualMode: true,
       interval: parseInt(interval, 10),
       categories,
       isKvConnected,
       isVercel,
-
       firestoreStatus
     });
   } catch (error) {

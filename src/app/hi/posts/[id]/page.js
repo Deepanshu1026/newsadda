@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
-import { readDatabase } from "../../../../services/db";
-import { SEO_CONFIG, getCanonicalUrl } from "../../../../services/seo/config";
-import ArticlePageContent from "../../../../components/ArticlePageContent";
+import { readDatabase } from "../../../../../services/db";
+import { SEO_CONFIG, getCanonicalUrl } from "../../../../../services/seo/config";
+import ArticlePageContent from "../../../../../components/ArticlePageContent";
 
 export const revalidate = 60;
 
@@ -10,12 +10,11 @@ async function getPostById(id) {
     const posts = await readDatabase();
     return posts.find((p) => p.id === id);
   } catch (error) {
-    console.error(`[Article Page] Error reading post ID ${id}:`, error.message);
+    console.error(`[Article Page HI] Error reading post ID ${id}:`, error.message);
     return null;
   }
 }
 
-// Generate Dynamic SEO Metadata for Google Discover, Google News, and indexation
 export async function generateMetadata({ params }) {
   const { id } = await params;
   const post = await getPostById(id);
@@ -34,7 +33,7 @@ export async function generateMetadata({ params }) {
     description: post.description,
     keywords: `${categoryKeyword}tech news, newsadda, AI article, trending updates, organic search`,
     alternates: {
-      canonical: getCanonicalUrl(`/posts/${post.id}`),
+      canonical: getCanonicalUrl(`/hi/posts/${post.id}`),
       languages: {
         "en-US": getCanonicalUrl(`/posts/${post.id}`),
         "hi-IN": getCanonicalUrl(`/hi/posts/${post.id}`),
@@ -46,7 +45,7 @@ export async function generateMetadata({ params }) {
     openGraph: {
       title: `${post.title} | ${SEO_CONFIG.siteName}`,
       description: post.description,
-      url: getCanonicalUrl(`/posts/${post.id}`),
+      url: getCanonicalUrl(`/hi/posts/${post.id}`),
       images: [
         {
           url: post.image || SEO_CONFIG.publisher.logoUrl,
@@ -54,7 +53,7 @@ export async function generateMetadata({ params }) {
         },
       ],
       type: "article",
-      locale: "en_US",
+      locale: "hi_IN",
       publishedTime: post.publishedAt,
       modifiedTime: post.publishedAt,
       authors: [getCanonicalUrl(`/author/${authorSlug}`)]
@@ -69,7 +68,7 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default async function ArticlePage({ params }) {
+export default async function HindiArticlePage({ params }) {
   const { id } = await params;
   const post = await getPostById(id);
 
@@ -77,12 +76,11 @@ export default async function ArticlePage({ params }) {
     notFound();
   }
 
-  // Redirect Hindi articles to their canonical language-specific URL
-  if (post.language === "hi") {
-    redirect(`/hi/posts/${id}`);
+  // Redirect non-Hindi articles back to the English URL
+  if (post.language !== "hi") {
+    redirect(`/posts/${id}`);
   }
 
-  // Load all posts to compile related and trending lists
   const allPosts = await readDatabase();
 
   const relatedPosts = allPosts
@@ -99,7 +97,7 @@ export default async function ArticlePage({ params }) {
       post={post}
       relatedPosts={relatedPosts}
       trendingPosts={trendingPosts}
-      lang="en"
+      lang="hi"
     />
   );
 }

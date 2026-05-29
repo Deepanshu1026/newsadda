@@ -40,7 +40,7 @@ ${newsArticles
     <news:news>
       <news:publication>
         <news:name>${SEO_CONFIG.siteName}</news:name>
-        <news:language>en</news:language>
+        <news:language>${post.language || 'en'}</news:language>
       </news:publication>
       <news:publication_date>${post.publishedAt}</news:publication_date>
       <news:title>${safeTitle}</news:title>

@@ -1,8 +1,8 @@
 import HomeFeed from "../../components/HomeFeed";
 import { readDatabase } from "../../services/db";
 
-// Force server pre-rendering on every page visit to ensure SEO payloads are perfectly updated
-export const dynamic = "force-dynamic";
+// Revalidate every 60 seconds (ISR) for fresh SEO payloads without dynamic-render overhead
+export const revalidate = 60;
 
 export default async function HomePage() {
   const posts = await readDatabase();

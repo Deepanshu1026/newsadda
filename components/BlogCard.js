@@ -2,6 +2,8 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { getPostUrl } from "../../lib/utils";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 function getInitials(name) {
@@ -47,19 +49,19 @@ export default function BlogCard({ post }) {
   const fallback = getFallbackImage(post.category);
 
   return (
-    <Link href={`/posts/${post.id}`} style={{ display: "block" }}>
+    <Link href={getPostUrl(post)} style={{ display: "block" }}>
       <div className="blog-card">
         {/* Cover image */}
-        <div className="blog-card-image-wrapper">
-          <img
+        <div className="blog-card-image-wrapper" style={{ position: "relative", width: "100%", paddingBottom: "56.25%", borderRadius: "12px", overflow: "hidden" }}>
+          <Image
             src={post.image || fallback}
             alt={post.title}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="blog-card-image"
-            loading="lazy"
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = fallback;
-            }}
+            style={{ objectFit: "cover" }}
+            onError={() => { /* Next.js Image error handled via fallback in parent if needed */ }}
+            unoptimized={!post.image} // fallback images may not be in remotePatterns; keep unoptimized safe
           />
         </div>
 

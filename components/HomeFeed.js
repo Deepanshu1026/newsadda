@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import PerformanceImage from "./seo/PerformanceImage";
 import SafeAdSlot from "./seo/SafeAdSlot";
+import { getPostUrl } from "../lib/utils";
 
 // ─── Helper utilities ──────────────────────────────────────────────────────
 function getFallbackImage(category) {
@@ -39,7 +40,7 @@ function formatDate(dateStr) {
 function FeaturedPost({ post }) {
   const fallback = getFallbackImage(post.category);
   return (
-    <Link href={`/posts/${post.id}`} style={{ display: "block" }}>
+    <Link href={getPostUrl(post)} style={{ display: "block" }}>
       <article className="featured-post-card" id="featured-post-card">
         <div className="featured-post-image-wrapper" style={{ borderRadius: "12px", overflow: "hidden", marginBottom: "16px" }}>
           <PerformanceImage
@@ -72,7 +73,7 @@ function FeaturedPost({ post }) {
 function TopStoryItem({ post, index }) {
   const fallback = getFallbackImage(post.category);
   return (
-    <Link href={`/posts/${post.id}`} style={{ display: "block" }}>
+    <Link href={getPostUrl(post)} style={{ display: "block" }}>
       <article className="top-story-item" id={`top-story-item-${index}`}>
         <div className="top-story-number" aria-label={`Story ${index + 1}`}>
           {index + 1}
@@ -101,7 +102,7 @@ function TopStoryItem({ post, index }) {
 function GridPostCard({ post }) {
   const fallback = getFallbackImage(post.category);
   return (
-    <Link href={`/posts/${post.id}`} style={{ display: "block" }}>
+    <Link href={getPostUrl(post)} style={{ display: "block" }}>
       <article className="grid-post-card" id={`grid-post-card-${post.id}`}>
         <div className="grid-post-image-wrapper" style={{ borderRadius: "12px", overflow: "hidden", marginBottom: "12px" }}>
           <PerformanceImage
