@@ -7,13 +7,14 @@ import Image from "next/image";
 import Navbar from "../../components/Navbar";
 import SafeAdSlot from "../../components/seo/SafeAdSlot";
 import StickyBottomAd from "../../components/StickyBottomAd";
+import GoldPriceMarquee from "../../components/GoldPriceMarquee";
 
 export const metadata = {
   title: "NewsAdda — Trusted & Fast News",
   description:
     "Stay updated with real-time news, cricket, technology, politics, entertainment, and trending stories from India and around the world.",
   keywords:
-    "tech news, trusted news, fast news, latest news, trending news, news blog, cricket, fashion, politics",
+    "tech news, trusted news, fast news, latest news, trending news, news blog, cricket, fashion, politics, gold rate today, gold price today, silver price, live gold price, 24k gold rate, gold rate india",
   openGraph: {
     title: "NewsAdda — Trusted & Fast News",
     description: "Real-time updates, trusted and fast news.",
@@ -120,6 +121,9 @@ export default function RootLayout({ children }) {
             </div>
           </footer>
         </div>
+
+        {/* Live Gold Rate Sticky Bottom Marquee */}
+        <GoldPriceMarquee />
 
         {/* Floating Premium Sticky Bottom Display Ad */}
         <StickyBottomAd />

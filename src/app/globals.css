@@ -43,12 +43,203 @@
   --navbar-height: 68px;
 }
 
-/* ─── Reset ───────────────────────────────────────────────── */
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+/* ─── Gold Price Sticky Bottom Marquee ─────────────────────── */
+
+.gold-marquee-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10000;
+  height: 42px;
+  background: linear-gradient(90deg, #78350f 0%, #b45309 40%, #d97706 60%, #b45309 80%, #78350f 100%);
+  background-size: 200% 100%;
+  animation: goldShimmer 8s linear infinite;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 -4px 20px rgba(217, 119, 6, 0.25);
+  display: flex;
+  align-items: center;
+  font-family: var(--font-body);
+  overflow: hidden;
 }
+
+@keyframes goldShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.gold-marquee-inner {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+  gap: 14px;
+  height: 100%;
+}
+
+.gold-marquee-pill {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 30px;
+  padding: 4px 12px;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.2s ease, transform 0.2s ease;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.gold-marquee-pill:hover {
+  background: rgba(255, 255, 255, 0.24);
+  transform: translateY(-1px);
+}
+
+.gold-marquee-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #bef264;
+  box-shadow: 0 0 8px #bef264;
+  animation: livePulse 1.8s ease-in-out infinite;
+}
+
+@keyframes livePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.75); }
+}
+
+.gold-marquee-pill-price {
+  color: #fef08a;
+  font-weight: 800;
+}
+
+.gold-marquee-unit {
+  font-weight: 500;
+  opacity: 0.85;
+  font-size: 0.75rem;
+}
+
+.gold-marquee-track-wrapper {
+  flex: 1;
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+}
+
+.gold-marquee-track {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  width: max-content;
+  animation: marqueeScroll 28s linear infinite;
+  white-space: nowrap;
+}
+
+@keyframes marqueeScroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.gold-marquee-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.gold-marquee-icon {
+  color: #fde047;
+  font-size: 0.65rem;
+  line-height: 1;
+}
+
+.gold-marquee-cta {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 8px;
+  padding: 4px 10px;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s ease;
+  white-space: nowrap;
+}
+
+.gold-marquee-cta:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.gold-marquee-cta-text {
+  display: inline;
+}
+
+/* When marquee is active, push sticky ad up */
+body.has-gold-marquee .sticky-bottom-ad-container {
+  bottom: 42px;
+}
+
+/* Responsive marquee */
+@media (max-width: 768px) {
+  .gold-marquee-bar {
+    height: 38px;
+  }
+
+  body.has-gold-marquee .sticky-bottom-ad-container {
+    bottom: 38px;
+  }
+
+  .gold-marquee-inner {
+    padding: 0 10px;
+    gap: 10px;
+  }
+
+  .gold-marquee-pill {
+    font-size: 0.75rem;
+    padding: 3px 10px;
+    gap: 6px;
+  }
+
+  .gold-marquee-item {
+    font-size: 0.75rem;
+  }
+
+  .gold-marquee-cta-text {
+    display: none;
+  }
+
+  .gold-marquee-cta {
+    padding: 4px;
+  }
+}
+
+@media (max-width: 380px) {
+  .gold-marquee-pill {
+    font-size: 0.7rem;
+    padding: 3px 8px;
+  }
+
+  .gold-marquee-pill-price .gold-marquee-unit {
+    display: none;
+  }
+}
+
 
 body {
   background-color: var(--bg-deep);

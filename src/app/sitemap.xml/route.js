@@ -14,7 +14,8 @@ export async function GET() {
       "/contact",
       "/editorial-policy",
       "/privacy-policy",
-      "/terms"
+      "/terms",
+      "/gold-rate"
     ];
 
     // Unique Categories
