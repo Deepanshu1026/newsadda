@@ -95,7 +95,7 @@ export default async function GoldRatePage() {
         acceptedAnswer: {
           "@type": "Answer",
           text: prices
-            ? `As of today, the live 24K gold rate in India is approximately INR ${prices.IN.goldPrice.toLocaleString()} per 10 grams and silver is around INR ${prices.IN.silverPrice.toLocaleString()} per 10 grams. Prices refresh every 5 minutes.`
+            ? `As of today, the live 24K gold rate in India is approximately INR ${prices.IN.purity.k24.toLocaleString()} per 10 grams, 22K gold is around INR ${prices.IN.purity.k22.toLocaleString()} per 10 grams, and 18K gold is about INR ${prices.IN.purity.k18.toLocaleString()} per 10 grams. Silver is around INR ${prices.IN.silverPrice.toLocaleString()} per 10 grams. Prices refresh every 5 minutes.`
             : "Gold rates are updated in real-time. Visit our live ticker or refresh the page for the latest Indian gold price.",
         },
       },
@@ -273,35 +273,126 @@ export default async function GoldRatePage() {
                     )}
                   </div>
 
-                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        padding: "10px 12px",
-                        background: isIndia ? "#fffbeb" : "#f8fafc",
-                        borderRadius: "10px",
-                      }}
-                    >
-                      <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 500 }}>
-                        24K Gold
-                      </span>
-                      <span
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    {isIndia && (
+                      <>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: "10px 12px",
+                            background: "#fffbeb",
+                            borderRadius: "10px",
+                          }}
+                        >
+                          <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 500 }}>
+                            24K Gold (99.9%)
+                          </span>
+                          <span
+                            style={{
+                              fontFamily: "var(--font-display)",
+                              fontWeight: 800,
+                              fontSize: "1.05rem",
+                              color: "#b45309",
+                            }}
+                          >
+                            {p.currency} {p.purity.k24.toLocaleString()}
+                            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: 500 }}>
+                              {" "}
+                              / {p.unit}
+                            </span>
+                          </span>
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: "10px 12px",
+                            background: "#fffbeb",
+                            borderRadius: "10px",
+                          }}
+                        >
+                          <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 500 }}>
+                            22K Gold (91.6%)
+                          </span>
+                          <span
+                            style={{
+                              fontFamily: "var(--font-display)",
+                              fontWeight: 800,
+                              fontSize: "1.05rem",
+                              color: "#b45309",
+                            }}
+                          >
+                            {p.currency} {p.purity.k22.toLocaleString()}
+                            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: 500 }}>
+                              {" "}
+                              / {p.unit}
+                            </span>
+                          </span>
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: "10px 12px",
+                            background: "#fffbeb",
+                            borderRadius: "10px",
+                          }}
+                        >
+                          <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 500 }}>
+                            18K Gold (75%)
+                          </span>
+                          <span
+                            style={{
+                              fontFamily: "var(--font-display)",
+                              fontWeight: 800,
+                              fontSize: "1.05rem",
+                              color: "#b45309",
+                            }}
+                          >
+                            {p.currency} {p.purity.k18.toLocaleString()}
+                            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: 500 }}>
+                              {" "}
+                              / {p.unit}
+                            </span>
+                          </span>
+                        </div>
+                      </>
+                    )}
+
+                    {!isIndia && (
+                      <div
                         style={{
-                          fontFamily: "var(--font-display)",
-                          fontWeight: 800,
-                          fontSize: "1.05rem",
-                          color: "#b45309",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          padding: "10px 12px",
+                          background: "#f8fafc",
+                          borderRadius: "10px",
                         }}
                       >
-                        {p.currency} {p.goldPrice.toLocaleString()}
-                        <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: 500 }}>
-                          {" "}
-                          / {p.unit}
+                        <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 500 }}>
+                          24K Gold (99.9%)
                         </span>
-                      </span>
-                    </div>
+                        <span
+                          style={{
+                            fontFamily: "var(--font-display)",
+                            fontWeight: 800,
+                            fontSize: "1.05rem",
+                            color: "#b45309",
+                          }}
+                        >
+                          {p.currency} {p.purity.k24.toLocaleString()}
+                          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: 500 }}>
+                            {" "}
+                            / {p.unit}
+                          </span>
+                        </span>
+                      </div>
+                    )}
 
                     <div
                       style={{
@@ -423,7 +514,7 @@ export default async function GoldRatePage() {
             {
               q: "What is the gold rate today in India?",
               a: prices
-                ? `As of the latest update, the live 24K gold rate in India is approximately INR ${prices.IN.goldPrice.toLocaleString()} per 10 grams and silver is around INR ${prices.IN.silverPrice.toLocaleString()} per 10 grams.`
+                ? `As of the latest update, the live 24K gold rate in India is approximately INR ${prices.IN.purity.k24.toLocaleString()} per 10 grams, 22K gold is around INR ${prices.IN.purity.k22.toLocaleString()} per 10 grams, 18K gold is about INR ${prices.IN.purity.k18.toLocaleString()} per 10 grams, and silver is around INR ${prices.IN.silverPrice.toLocaleString()} per 10 grams.`
                 : "Our live ticker shows the current Indian gold rate. Please check the table above or the bottom ticker for the latest price.",
             },
             {

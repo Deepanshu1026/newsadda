@@ -1,6 +1,6 @@
-const API_KEY = "d264911168e38edd26d76414a81c68a0";
-const BASE_URL = "https://api.metalpriceapi.com/v1/latest";
-const CURRENCIES = "EUR,INR,GBP,AED,CAD,AUD,JPY,CNY,XAU,XAG";
+const GOLD_API_KEY = "2b2e0c67d8e2f6fa6526a3b71cbcb773a3af790e24bd8dbb589a85f4a35b6fff";
+const GOLD_API_BASE = "https://api.gold-api.com";
+const FX_API_URL = "https://open.er-api.com/v6/latest/USD";
 
 /** Country configs for gold/silver display (price per unit) */
 export const GOLD_COUNTRY_CONFIG = {
@@ -85,37 +85,74 @@ export function detectCountry() {
   return DEFAULT_COUNTRY;
 }
 
+function round2(n) {
+  return Math.round(n * 100) / 100;
+}
+
+/** Calculate purity prices from pure 24K (99.9%) gold price */
+function calculatePurityPrices(price24KPerUnit) {
+  return {
+    k24: round2(price24KPerUnit),
+    k22: round2(price24KPerUnit * 0.916),   // 22K = 91.6% pure
+    k18: round2(price24KPerUnit * 0.75),   // 18K = 75% pure
+  };
+}
+
 /** Fetch and normalize gold/silver prices (server-side safe) */
 export async function fetchGoldPrices() {
-  const url = `${BASE_URL}?api_key=${API_KEY}&base=USD&currencies=${CURRENCIES}`;
+  // Parallel fetch: gold, silver, and exchange rates
+  const [goldRes, silverRes, fxRes] = await Promise.all([
+    fetch(`${GOLD_API_BASE}/price/XAU`, {
+      headers: { "x-access-token": GOLD_API_KEY },
+      next: { revalidate: 300 },
+    }),
+    fetch(`${GOLD_API_BASE}/price/XAG`, {
+      headers: { "x-access-token": GOLD_API_KEY },
+      next: { revalidate: 300 },
+    }),
+    fetch(FX_API_URL, { next: { revalidate: 300 } }),
+  ]);
 
-  const res = await fetch(url, { next: { revalidate: 300 } }); // 5 min ISR cache
-  if (!res.ok) throw new Error(`MetalPriceAPI error: ${res.status}`);
+  if (!goldRes.ok) throw new Error(`Gold-API gold error: ${goldRes.status}`);
+  if (!silverRes.ok) throw new Error(`Gold-API silver error: ${silverRes.status}`);
+  if (!fxRes.ok) throw new Error(`Exchange rate API error: ${fxRes.status}`);
 
-  const data = await res.json();
-  if (!data.success) throw new Error("MetalPriceAPI returned unsuccessful");
+  const goldData = await goldRes.json();
+  const silverData = await silverRes.json();
+  const fxData = await fxRes.json();
 
-  const rates = data.rates || {};
+  if (!goldData || typeof goldData.price !== "number") {
+    throw new Error("Gold-API returned invalid gold data");
+  }
+  if (!silverData || typeof silverData.price !== "number") {
+    throw new Error("Gold-API returned invalid silver data");
+  }
 
-  const usdPerOzGold = 1 / (rates.XAU || 1);
-  const usdPerOzSilver = 1 / (rates.XAG || 1);
+  const usdPerOzGold = goldData.price;
+  const usdPerOzSilver = silverData.price;
+  const fxRates = fxData.rates || {};
+  const lastUpdated = goldData.updatedAt || new Date().toISOString();
 
   const prices = {};
   Object.keys(GOLD_COUNTRY_CONFIG).forEach((code) => {
     const cfg = GOLD_COUNTRY_CONFIG[code];
-    const fxRate = rates[cfg.currency] || 1;
+    const fxRate = fxRates[cfg.currency] || 1;
     const goldPerUnit = (usdPerOzGold * fxRate) / cfg.unitFactor;
     const silverPerUnit = (usdPerOzSilver * fxRate) / cfg.unitFactor;
 
     prices[code] = {
       ...cfg,
-      goldPrice: Math.round(goldPerUnit * 100) / 100,
-      silverPrice: Math.round(silverPerUnit * 100) / 100,
-      goldPriceUSD: Math.round(usdPerOzGold * 100) / 100,
-      silverPriceUSD: Math.round(usdPerOzSilver * 100) / 100,
-      lastUpdated: new Date(data.timestamp * 1000).toISOString(),
+      purity: calculatePurityPrices(goldPerUnit),
+      silverPrice: round2(silverPerUnit),
+      goldPrice: round2(goldPerUnit),     // 24K alias for backward compat
+      goldPriceUSD: round2(usdPerOzGold),
+      silverPriceUSD: round2(usdPerOzSilver),
+      lastUpdated,
     };
   });
 
-  return { prices, raw: data };
+  return {
+    prices,
+    raw: { gold: goldData, silver: silverData, fx: fxData },
+  };
 }
