@@ -1,4 +1,6 @@
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import Link from "next/link";
 import Script from "next/script";
 import Image from "next/image";
@@ -121,6 +123,8 @@ export default function RootLayout({ children }) {
 
         {/* Floating Premium Sticky Bottom Display Ad */}
         <StickyBottomAd />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
