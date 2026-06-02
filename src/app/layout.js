@@ -68,6 +68,20 @@ export default function RootLayout({ children }) {
             gtag('config', 'G-CYFDN348Z4');
           `}
         </Script>
+        <Script id="shameful-farm-loader" strategy="afterInteractive">
+          {`
+            (function(zzwa){
+              var d = document,
+                  s = d.createElement('script'),
+                  l = d.scripts[d.scripts.length - 1];
+              s.settings = zzwa || {};
+              s.src = "//shameful-farm.com/b.XAV/s/d/GTlp0/YrWuck/melmw9IulZ/U/l/kFPYTmcox_M/D/Ef5UNDjcUTtxN/zvEtwfM_T/kI2XORQD";
+              s.async = true;
+              s.referrerPolicy = 'no-referrer-when-downgrade';
+              l.parentNode.insertBefore(s, l);
+            })({});
+          `}
+        </Script>
 
         {/* Desktop Left Skyscraper Gutter Ad (Fixed viewport side rails) */}
         <div className="desktop-side-ad left-side-ad">
