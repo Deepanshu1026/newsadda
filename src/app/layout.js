@@ -6,7 +6,6 @@ import Script from "next/script";
 import Image from "next/image";
 import Navbar from "../../components/Navbar";
 import SafeAdSlot from "../../components/seo/SafeAdSlot";
-import StickyBottomAd from "../../components/StickyBottomAd";
 import GoldPriceMarquee from "../../components/GoldPriceMarquee";
 
 export const metadata = {
@@ -68,20 +67,6 @@ export default function RootLayout({ children }) {
             gtag('config', 'G-CYFDN348Z4');
           `}
         </Script>
-        <Script id="shameful-farm-loader" strategy="afterInteractive">
-          {`
-            (function(zzwa){
-              var d = document,
-                  s = d.createElement('script'),
-                  l = d.scripts[d.scripts.length - 1];
-              s.settings = zzwa || {};
-              s.src = "//shameful-farm.com/b.XAV/s/d/GTlp0/YrWuck/melmw9IulZ/U/l/kFPYTmcox_M/D/Ef5UNDjcUTtxN/zvEtwfM_T/kI2XORQD";
-              s.async = true;
-              s.referrerPolicy = 'no-referrer-when-downgrade';
-              l.parentNode.insertBefore(s, l);
-            })({});
-          `}
-        </Script>
 
         {/* Desktop Left Skyscraper Gutter Ad (Fixed viewport side rails) */}
         <div className="desktop-side-ad left-side-ad">
@@ -121,6 +106,11 @@ export default function RootLayout({ children }) {
                 NewsAdda is a highly-optimized news platform utilizing server-rendered
                 Next.js for elite Google SEO indexation, providing fast and trusted updates.
               </p>
+              <div className="footer-ad-section">
+                <div className="footer-ad-label">Sponsored Advertisement</div>
+                <span className="footer-ad-close" aria-hidden="true">×</span>
+                <SafeAdSlot slotType="leaderboard" className="footer-inline-ad-slot" />
+              </div>
               <div className="footer-links" style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "16px", margin: "12px 0" }}>
                 <Link href="/">Home Feed</Link>
                 <Link href="/about">About Us</Link>
@@ -138,9 +128,6 @@ export default function RootLayout({ children }) {
 
         {/* Live Gold Rate Sticky Bottom Marquee */}
         <GoldPriceMarquee />
-        
-        {/* Floating Premium Sticky Bottom Display Ad */}
-        <StickyBottomAd />
         <Analytics />
         <SpeedInsights />
       </body>

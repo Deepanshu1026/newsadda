@@ -15,15 +15,19 @@ import React, { useEffect, useState } from "react";
  * @param {string} [props.className] - CSS class name
  */
 export default function SafeAdSlot({ slotType = "leaderboard", className = "" }) {
-  // Manual ad slots are temporarily disabled for now since AdSense Auto Ads are fully active.
-  // To re-enable manual placements in the future, simply comment out or delete the "return null;" statement below!
-  return null;
-
   const [isProd, setIsProd] = useState(false);
+  const [forceLive, setForceLive] = useState(false);
 
   useEffect(() => {
     // Detect environment on mount to prevent SSR hydration mismatch
-    setIsProd(process.env.NODE_ENV === "production");
+    const liveEnvironment =
+      process.env.NODE_ENV === "production" ||
+      (typeof window !== "undefined" && !window.location.hostname.includes("localhost"));
+    setIsProd(liveEnvironment);
+
+    if (typeof window !== "undefined") {
+      setForceLive(localStorage.getItem("newsadda_force_live_ads") === "true");
+    }
 
     // Automatically trigger the AdSense script to search and load the ad unit
     try {
@@ -41,33 +45,33 @@ export default function SafeAdSlot({ slotType = "leaderboard", className = "" })
       width: "100%",
       minHeight: "90px",
       maxHeight: "120px",
-      slotId: "8945078741780854" // Uses your verified publisher slot parameters
+      slotId: "8787539742"
     },
     rectangle: {
       width: "300px",
       minHeight: "250px",
       maxHeight: "300px",
-      slotId: "8945078741780854"
+      slotId: "8787539742"
     },
     sidebar: {
       width: "120px",
       minHeight: "600px",
       maxHeight: "600px",
-      slotId: "8945078741780854"
+      slotId: "8787539742"
     }
   };
 
   const currentLayout = layouts[slotType] || layouts.leaderboard;
+  const isReal = isProd || forceLive;
 
   // Production: Renders only the active Google AdSense tag.
   // It has no default borders, background, or text. It stays 100% invisible/hidden (height: 0) 
   // unless Google decides to serve an ad in it, in which case it automatically expands!
-  if (isProd) {
+  if (isReal) {
     return (
       <div
-        className={`adsense-prod-slot ${className}`}
+        className={`adsense-prod-slot adsense-prod-slot--${slotType} ${className}`}
         style={{
-          margin: "24px auto",
           textAlign: "center",
           width: currentLayout.width,
           overflow: "hidden"
@@ -77,8 +81,7 @@ export default function SafeAdSlot({ slotType = "leaderboard", className = "" })
           className="adsbygoogle"
           style={{
             display: "block",
-            width: "100%",
-            height: "auto"
+            width: "100%"
           }}
           data-ad-client="ca-pub-8945078741780854"
           data-ad-slot={currentLayout.slotId}
@@ -92,48 +95,27 @@ export default function SafeAdSlot({ slotType = "leaderboard", className = "" })
   // Development: Shows dashed placeholder so you can visually verify layouts and slots!
   return (
     <div
+      className={`adsense-safe-slot adsense-safe-slot--${slotType} ${className}`}
       style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        margin: "24px auto",
         width: currentLayout.width,
         minHeight: currentLayout.minHeight,
         maxHeight: currentLayout.maxHeight,
-        backgroundColor: "rgba(15, 23, 42, 0.02)",
-        border: "1px dashed var(--border-subtle, rgba(15, 23, 42, 0.08))",
-        borderRadius: "8px",
-        overflow: "hidden"
       }}
-      className={`adsense-safe-slot ${className}`}
     >
-      <span
-        style={{
-          fontSize: "9px",
-          fontWeight: "600",
-          letterSpacing: "0.05em",
-          textTransform: "uppercase",
-          color: "var(--text-muted, #64748b)",
-          marginBottom: "4px",
-          marginTop: "4px"
-        }}
-      >
-        Advertisement Slot ({slotType})
-      </span>
-
-      <div
-        style={{
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: "0.8rem",
-          color: "var(--text-muted, #94a3b8)"
-        }}
-      >
-        Ad unit will load here dynamically in production. (Hidden if empty)
+      <div className="adsense-safe-slot__chrome">
+        <span className="adsense-safe-slot__label">Sponsored Advertisement</span>
+        <span className="adsense-safe-slot__badge">{slotType}</span>
+      </div>
+      <div className="adsense-safe-slot__content">
+        <div className="adsense-safe-slot__icon" aria-hidden="true">
+          AD
+        </div>
+        <div className="adsense-safe-slot__copy">
+          <span className="adsense-safe-slot__title">Ad space reserved</span>
+          <span className="adsense-safe-slot__desc">
+            This placement uses the same shared ad UI across the site.
+          </span>
+        </div>
       </div>
     </div>
   );

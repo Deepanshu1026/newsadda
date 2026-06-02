@@ -254,6 +254,10 @@ export default function HomeFeed({ initialPosts = [] }) {
                   </p>
                 )}
               </div>
+              <div className="top-stories-ad-card">
+                <div className="top-stories-ad-label">Sponsored Advertisement</div>
+                <SafeAdSlot slotType="rectangle" className="top-stories-ad-slot" />
+              </div>
             </aside>
           </section>
         )}
@@ -268,9 +272,10 @@ export default function HomeFeed({ initialPosts = [] }) {
             <div className="grid-cards-container">
               {gridPosts.flatMap((post, index) => {
                 const elements = [<GridPostCard key={post.id} post={post} />];
+                const totalRenderedPosts = 4 + index + 1;
                 
-                // Inject an in-feed banner dynamically after every 10 articles
-                if ((index + 1) % 10 === 0) {
+                // Inject an in-feed banner after every 10 total blog cards in the full feed.
+                if (totalRenderedPosts % 10 === 0) {
                   elements.push(
                     <div key={`in-feed-ad-${index}`} style={{ gridColumn: "1 / -1", width: "100%", margin: "16px 0" }}>
                       <SafeAdSlot slotType="leaderboard" />
