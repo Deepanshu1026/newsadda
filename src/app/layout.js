@@ -100,6 +100,9 @@ export default function RootLayout({ children }) {
           {/* Core Content Viewport */}
           {children}
 
+          {/* Shared In-Page Bottom Ad */}
+          <StickyBottomAd />
+
           {/* Shared Site Footer */}
           <footer className="footer">
             <div className="footer-content">
@@ -138,9 +141,6 @@ export default function RootLayout({ children }) {
 
         {/* Live Gold Rate Sticky Bottom Marquee */}
         <GoldPriceMarquee />
-
-        {/* Floating Premium Sticky Bottom Display Ad */}
-        <StickyBottomAd />
         <Analytics />
         <SpeedInsights />
       </body>
