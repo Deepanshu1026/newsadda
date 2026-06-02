@@ -4,31 +4,36 @@ export async function generateBlogArticle(title, description, category = "Techno
   const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
-    console.log("[Gemini Service] GEMINI_API_KEY is missing. Generating beautiful fallback Markdown article.");
+    console.log("[Gemini Service] GEMINI_API_KEY is missing. Generating human-sounding fallback Markdown article.");
     return generateFallbackMarkdown(title, description, category);
   }
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
-    // Use gemini-1.5-flash as the fast, cost-effective default model
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const prompt = `
-      You are an expert tech journalist and SEO specialist writing for NewsAdda.
-      Write an extensive, highly engaging, and SEO-optimized news blog article based on the following details:
-      
-      Category: ${category}
-      Headline Title: ${title}
-      Short Summary: ${description}
-      
-      CRITICAL INSTRUCTIONS:
-      1. Format the entire article in clean, readable Markdown.
-      2. Use descriptive subheadings (###) to separate logical points.
-      3. Use bold text, bullet points (1., *), and at least one high-quality blockquote (> ) to make it readable.
-      4. If appropriate, write code examples inside code blocks (\\\`\\\`\\\`javascript ... \\\`\\\`\\\`).
-      5. Do NOT include the main title or the category as a header in your output. Start directly with the introduction.
-      6. Make the writing authoritative, detailed, and at least 3-4 paragraphs long.
-    `;
+You are a seasoned Indian tech reporter writing for NewsAdda. Your readers are smart but busy — they want depth without dryness. Write like you're talking to a friend who cares about tech but hates jargon.
+
+Category: ${category}
+Headline Title: ${title}
+Short Summary: ${description}
+
+CRITICAL INSTRUCTIONS:
+1. Format in clean Markdown. Use ### subheadings that sound like a real blog, not a research paper.
+2. Use bold, bullet points, ONE blockquote. Make it readable.
+3. If code makes sense, add a short code block (\`\`\`javascript ... \`\`\`).
+4. Do NOT start with the title as a header. Jump into the story.
+5. Write at least 3-4 solid paragraphs, ideally more.
+6. HUMAN TONE (break these and it sounds like a bot):
+   - Use contractions: don't, can't, it's, won't, that's.
+   - Mix short and long sentences. Start some paragraphs casually.
+   - Avoid AI poison words: "delve", "landscape", "tapestry", "robust", "multifaceted", "in today's fast-paced world", "cascade", "pivotal", "paramount", "foster", "leverage", "synergy", "holistic".
+   - Add human touches: "Here's what surprised me...", "Not everyone's convinced, and honestly? Fair.", "If you're thinking [X], you're not alone."
+   - Explain complex stuff with real-world analogies.
+   - Vary sentence openings.
+   - Use specific numbers and examples.
+`;
 
     const result = await model.generateContent(prompt);
     const text = result.response.text();
@@ -39,14 +44,19 @@ export async function generateBlogArticle(title, description, category = "Techno
   }
 }
 
-// Generate highly realistic, beautiful Markdown content based on context when API is unavailable
 function generateFallbackMarkdown(title, description, category) {
-  // Extract keywords from title to customize fallback text
   const cleanTitle = title.replace(/[^\w\s]/gi, '');
   const keywords = cleanTitle.split(" ").filter(w => w.length > 4);
-  const keyword1 = keywords[0] || "Innovation";
-  const keyword2 = keywords[1] || "Technology";
-  const keyword3 = keywords[2] || "Future";
+  const keyword1 = keywords[0] || "tech";
+  const keyword2 = keywords[1] || "update";
+  const keyword3 = keywords[2] || "news";
 
-  return `### The Digital Acceleration of ${keyword1}\n\nThe recent announcement regarding **${title}** represents a paradigm shift in how we conceptualize modern ${category.toLowerCase()} infrastructures. As organizations rush to integrate next-generation capabilities, this development—summarized as *"${description}"*—highlights the rapid convergence of hardware scaling and advanced AI modeling.\n\nAt the core of this transition is the need for scalable, real-time architectures. Developers and researchers alike are discovering that traditional execution pipelines are no longer sufficient to support the computational load required by high-fidelity systems.\n\n### Breakthrough Architectures and Implementation\n\nTo understand why this is such a major step forward, we must look at the structural changes being implemented. Key technical benefits include:\n\n1. **Dynamic Optimization:** The system continuously profiles compute bandwidth, adjusting execution threads to eliminate memory bottlenecks.\n2. **Enhanced Security Protocols:** Integrated cryptographic handshakes protect telemetry streams against potential intrusion points.\n3. **Lower Initial Latency:** Refactored runtime libraries achieve up to 30% speed increases compared to previous generations.\n\n> "This development bridges the gap between theoretical computing capabilities and standard operating environments. It represents a massive leap forward for ${keyword2} globally."\n\n### Practical Code Walkthrough\n\nFor developers seeking to interface with these new systems, integrating the client-side APIs is remarkably straightforward. Below is a standard asynchronous integration block:\n\n\`\`\`javascript\n// Initializing the dynamic telemetry connection\nasync function initializeTelemetry(endpoint) {\n  const config = {\n    method: "POST",\n    headers: { "Content-Type": "application/json" },\n    body: JSON.stringify({ client: "newsadda-node-agent", timestamp: Date.now() })\n  };\n  \n  try {\n    const response = await fetch(endpoint, config);\n    const status = await response.json();\n    console.log("[System] Telemetry initialized successfully:", status.active);\n  } catch (e) {\n    console.error("[Error] Telemetry connection failed:", e.message);\n  }\n}\n\`\`\`\n\n### Looking Forward to the ${keyword3} Era\n\nAs standard operating systems begin integrating these features, the timeline to commercial utility is shrinking rapidly. Industry analysts expect that within the next 12 to 18 months, these frameworks will be standard across enterprise applications. Staying ahead of this wave requires proactive experimentation, structured developer training, and a deep appreciation for the emerging paradigms of ${category.toLowerCase()}.\n\nThis article will continue to be updated as further benchmark results and whitepapers are released by engineering teams globally.`;
+  const intros = [
+    `If you've been keeping an eye on ${category.toLowerCase()} lately, **${title}** probably caught your attention. And if it didn't, maybe it should have.`,
+    `**${title}** — on paper it sounds like routine news. But once you look closer, there's a genuine shift happening here.`,
+    `Here's something that quietly slipped into the ${category.toLowerCase()} conversation this week: **${title}**. At first glance, it looks like another incremental update. It's not.`
+  ];
+  const intro = intros[Math.floor(Math.random() * intros.length)];
+
+  return `### What's actually happening\n\n${intro}\n\n${description ? `To recap: ${description}. But that's just the surface.` : ``}\n\nI've been tracking this space long enough to know that not every announcement deserves a second look. This one does. Not because the headline is loud, but because the underlying details suggest a meaningful change in how things work.\n\n### Why this isn't just another update\n\n1. **The timing is suspiciously good.** Right when the industry was looking for a way to move forward without breaking everything that already exists, this shows up. That's not coincidence — that's someone reading the room.\n2. **The details matter more than the announcement.** Press releases are designed to sound impressive. What caught my eye here was the specific improvement in real-world usage, not the marketing language.\n3. **People are already arguing about it.** Scroll through any forum thread on this and you'll find two camps: the skeptics who think it's overhyped, and the early adopters who've already started experimenting. Both sides have valid points, which is always a sign something real is happening.\n\n> "I've watched a lot of ${category.toLowerCase()} trends come and go. This one feels different — not because of the hype, but because of the quiet, steady adoption I'm seeing behind the scenes."\n\n### What to actually pay attention to\n\nIf you're a developer or someone who just likes staying ahead of the curve, here's my honest take: don't chase the headline. Look at the second-order effects. How does this change the way existing tools behave? What breaks? What gets easier?\n\nIn my experience, the biggest shifts in ${category.toLowerCase()} don't announce themselves with fireworks. They show up as a small note in a changelog that slowly rewrites how everyone works. This might be one of those moments.\n\nWe'll keep watching this as more details surface. If you're experimenting with it already, I'd genuinely love to hear what's working and what isn't.\n\n*Stay tuned — this story is still unfolding.*\n\n### Trending SEO Keywords:\n* **${keyword1} ${keyword2}**\n* **${title.split(" ").slice(0, 3).join(" ")}**\n* **${category} news 2026**\n* **${keyword1} updates India**\n* **${keyword3} latest trends**`;
 }

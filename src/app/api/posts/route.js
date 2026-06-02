@@ -4,7 +4,7 @@ import { readDatabase } from "../../../../services/db";
 export async function GET() {
   try {
     const posts = await readDatabase();
-    
+
     // Sort posts by publishedAt date in descending order (newest first)
     const sortedPosts = [...posts].sort((a, b) => {
       const dateA = new Date(a.publishedAt || 0);

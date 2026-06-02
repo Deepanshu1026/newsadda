@@ -26,8 +26,7 @@ export async function generateBlogArticle(title, description, category = "Techno
   }
 
   const prompt = `
-You are an expert Indian journalist and SEO specialist writing for NewsAdda.
-Write a highly engaging, detailed, and SEO-optimized news blog article based on the following details:
+You are a seasoned Indian news reporter writing for NewsAdda — a popular digital news platform. Your job is to write a compelling, human-sounding news blog that feels like it was written by a real journalist, not an AI.
 
 Category: ${category}
 Headline Title: ${title}
@@ -35,15 +34,26 @@ Short Summary: ${description}
 
 ${searchContext ? `Here is the real-time background search coverage we fetched for this headline. Use these actual facts, details, and context to enrich your article:\n\n${searchContext}\n` : ""}
 
-CRITICAL INSTRUCTIONS FOR COMPLETENESS & SEO:
-1. The article MUST be a thorough read of **at least 500 to 800 words** in total. It is CRITICAL that you budget your generation length to fully complete the entire article and do not get cut off. Ensure the article is fully written, concluded, and polished with a proper closing paragraph.
-2. Format the entire article in clean, professional Markdown.
-3. Use descriptive subheadings (###) to separate sections (e.g., Background/Core Dynamics, Key Details/Analysis, and Future Outlook/Implications).
-4. Use bold text, bullet points (1., *), and a high-quality blockquote (> ) to make the post highly readable and engaging.
-5. Identify 4-6 highly relevant, trending SEO keywords based on the headline and search context. Integrate these keywords naturally with high density throughout the text to boost trending rank.
-6. Add a list of "Trending SEO Keywords" in a clean bulleted list at the very bottom of the post.
-7. Do NOT include the main title or the category as a header in your output. Start directly with the introduction.
-8. Write in an authoritative, analytical, and gripping tone tailored for Indian and global readers.
+CRITICAL INSTRUCTIONS — WRITE LIKE A HUMAN JOURNALIST:
+1. The article MUST be **at least 500 to 800 words**. Finish completely with a proper closing paragraph. Do not trail off.
+2. Format in clean Markdown. Use ### subheadings, but keep them punchy — not robotic.
+3. Use bold, bullet points, and ONE blockquote. Make it scannable but not sterile.
+4. Inject 4-6 natural SEO keywords into the flow. Don't stuff them awkwardly. They should feel like normal vocabulary.
+5. Add "Trending SEO Keywords" as a simple bulleted list at the very bottom.
+6. Do NOT start with the title as a header. Jump straight into the story.
+7. TONE RULES (this is critical — break these and the article sounds like a bot):
+   - Use contractions: don't, can't, it's, that's, won't, we're.
+   - Mix short punchy sentences with longer ones. Not every sentence needs to be perfect grammar.
+   - Start some paragraphs casually: "Here's the thing.", "Most people missed this.", "What's interesting is..."
+   - Use rhetorical questions sometimes: "So what does this actually mean for you?"
+   - Avoid AI poison words: NEVER use "delve", "landscape", "tapestry", "robust", "multifaceted", "in today's fast-paced world", "cascade", "pivotal", "paramount", "foster", "leverage", "synergy", "holistic", "nexus", "paradigm", "convergence", "stakeholders", "actionable insights", "moving forward", "it is important to note".
+   - Use plain English. If you wouldn't say it out loud to a friend in a cafe, don't write it.
+   - Add human touches: "I was surprised to see...", "Here's what caught my attention.", "Not everyone agrees, though."
+   - Use real comparisons and analogies when explaining complex stuff.
+   - Vary sentence openings. Don't start three paragraphs in a row with "The..." or "This..."
+   - For tech topics, explain like you're talking to a smart friend, not a textbook.
+   - Use numbers and specifics when possible: "₹2.4 crore", "3 out of 5 people", "last Tuesday".
+8. The tone should feel like a mid-day news analysis — informed, slightly opinionated, easy to read, and genuinely useful.
 `;
 
   const callApi = async (targetModel, maxTokens) => {
@@ -58,7 +68,7 @@ CRITICAL INSTRUCTIONS FOR COMPLETENESS & SEO:
         messages: [{ role: "user", content: prompt }],
         max_tokens: maxTokens,
         reasoning_effort: "low",
-        temperature: 0.7
+        temperature: 0.85
       })
     });
   };
@@ -105,8 +115,7 @@ export async function generateHindiBlogArticle(title, description, category = "T
   }
 
   const prompt = `
-आप NewsAdda के लिए एक विशेषज्ञ भारतीय पत्रकार और SEO विशेषज्ञ हैं।
-नीचे दिए गए विवरण के आधार पर एक अत्यधिक आकर्षक, विस्तृत और SEO-अनुकूलित समाचार ब्लॉग लेख हिंदी में लिखें।
+आप NewsAdda के लिए एक अनुभवी भारतीय रिपोर्टर हैं। आपको ऐसा समाचार लेख हिंदी में लिखना है जो एक असली इंसान ने लिखा हो — कोई AI नहीं। बोलचाल की हिंदी में लिखें, न कि किताबी हिंदी में।
 
 श्रेणी: ${category}
 शीर्षक: ${title}
@@ -114,15 +123,26 @@ export async function generateHindiBlogArticle(title, description, category = "T
 
 ${searchContext ? `यहां वास्तविक समय की पृष्ठभूमि खोज कवरेज है जो हमने इस शीर्षक के लिए प्राप्त की है। इन वास्तविक तथ्यों, विवरणों और संदर्भ का उपयोग अपने लेख को समृद्ध करने के लिए करें:\n\n${searchContext}\n` : ""}
 
-पूर्णता और SEO के लिए महत्वपूर्ण निर्देश:
-1. लेख कुल मिलाकर **कम से कम 500 से 800 शब्दों** का होना चाहिए। यह महत्वपूर्ण है कि आप पीढ़ी की लंबाई को पूरी तरह से प्रबंधित करें और बीच में न रुकें। लेख को पूरी तरह से लिखें, निष्कर्ष निकालें, और एक उचित समापन पैराग्राफ के साथ पॉलिश करें।
-2. पूरे लेख को साफ, पेशेवर Markdown में प्रारूपित करें।
-3. वर्णनात्मक उप-शीर्षकों (###) का उपयोग करें जैसे पृष्ठभूमि/मुख्य गतिशीलता, मुख्य विवरण/विश्लेषण, और भविष्य की संभावनाएं/प्रभाव।
-4. बोल्ड टेक्स्ट, बुलेट पॉइंट्स (1., *) और एक उच्च-गुणवत्ता वाला ब्लॉककोट (> ) का उपयोग करें ताकि पोस्ट अत्यधिक पठनीय और आकर्षक हो।
-5. शीर्षक और खोज संदर्भ के आधार पर 4-6 अत्यधिक प्रासंगिक, ट्रेंडिंग SEO कीवर्ड पहचानें। इन कीवर्ड को प्राकृतिक रूप से पूरे टेक्स्ट में उच्च घनत्व के साथ एकीकृत करें।
-6. पोस्ट के सबसे नीचे "ट्रेंडिंग SEO कीवर्ड" की एक साफ बुलleted सूची जोड़ें।
-7. अपने आउटपुट में मुख्य शीर्षक या श्रेणी को हेडर के रूप में शामिल न करें। सीधे परिचय के साथ शुरू करें।
-8. एक आधिकारिक, विश्लेषणात्मक और gripping स्वर में लिखें जो भारतीय और वैश्विक पाठकों के लिए उपयुक्त हो।
+महत्वपूर्ण निर्देश — इंसानों की तरह लिखें:
+1. लेख **कम से कम 500-800 शब्दों** का हो। अंत तक पूरा लिखें, बीच में न रुकें।
+2. साफ Markdown में लिखें। ### उप-शीर्षक दें, लेकिन रोबोटिक न लगें।
+3. बोल्ड, बुलेट पॉइंट्स और एक ब्लॉककोट (> ) का उपयोग करें।
+4. 4-6 SEO कीवर्ड को प्राकृतिक रूप से लेख में घुसाएं। जबरदस्ती न लगाएं।
+5. सबसे नीचे "ट्रेंडिंग SEO कीवर्ड" की सूची जोड़ें।
+6. सीधे कहानी में कूदें — शीर्षक को हेडर न बनाएं।
+7. टोन के नियम:
+   - बोलचाल की हिंदी में लिखें। "हम", "आप", "यहाँ", "वहाँ" जैसे शब्दों का उपयोग करें।
+   - संक्षिप्त और लंबे वाक्य मिलाएं। हर वाक्य का व्याकरण सही हो, यह ज़रूरी नहीं।
+   - कुछ पैराग्राफ़ अनौपचारिक तरीके से शुरू करें: "यहाँ बात यह है...", "ज़्यादातर लोग इसे नोटिस नहीं करते...", "दिलचस्प बात यह है..."
+   - कभी-कभी प्रश्न पूछें: "तो इसका आप पर क्या असर पड़ेगा?"
+   - AI ज़हर शब्दों से बचें: "परिदृश्य", "टेपेस्ट्री", "मजबूत", "बहुआयामी", "वर्तमान तेज गति वाली दुनिया में", "झरना", "महत्वपूर्ण", "परम", "पोषण", "उत्तोलन", "सहजीवन", "समग्र", "केन्द्रबिंदु", "प्रतिमान", "अभिसरण", "हितधारक", "कार्यक्षम अंतर्दृष्टि", "आगे बढ़ते हुए", "यह ध्यान देना महत्वपूर्ण है" — इन शब्दों का कभी उपयोग न करें।
+   - सरल हिंदी में लिखें। ऐसी हिंदी जो आप किसी दोस्त से कैफे में बात करते समय बोलेंगे।
+   - मानवीय स्पर्श दें: "मुझे यह जानकर हैरानी हुई...", "यहाँ मेरा ध्यान इस बात पर गया...", "हर किसी की राय एक जैसी नहीं है।"
+   - तुलना और उदाहरण दें।
+   - वाक्यों की शुरुआत बदलें। लगातार "यह..." या "इस..." से शुरू न करें।
+   - संख्याएं और विशिष्ट विवरण दें: "₹2.4 करोड़", "5 में से 3 लोग", "पिछले मंगलवार"।
+   - कभी-कभी हल्के हास्य या व्यंग्य का उपयोग करें।
+8. टोन: दोपहर के समाचार विश्लेषण जैसा — जानकार, थोड़ा राय वाला, आसानी से पढ़ने योग्य, और वास्तव में उपयोगी।
 `;
 
   const callApi = async (targetModel, maxTokens) => {
@@ -137,7 +157,7 @@ ${searchContext ? `यहां वास्तविक समय की पृ
         messages: [{ role: "user", content: prompt }],
         max_tokens: maxTokens,
         reasoning_effort: "low",
-        temperature: 0.7
+        temperature: 0.85
       })
     });
   };
@@ -175,54 +195,69 @@ function generateFallbackMarkdown(title, description, category, searchContext = 
   const cleanTitle = title.replace(/[^\w\s]/gi, "");
   const keywords = cleanTitle.split(/\s+/).filter((w) => w.length > 4);
   const keyword1 = keywords[0] || "India";
-  const keyword2 = keywords[1] || "Trending";
-  const keyword3 = keywords[2] || "Update";
+  const keyword2 = keywords[1] || "trending";
+  const keyword3 = keywords[2] || "update";
 
   let contextSection = "";
   if (searchContext && searchContext.trim().length > 0) {
-    contextSection = `### Real-Time Investigations & Search Analysis\n\nDeep-dive coverage across leading national news outlets offers valuable context on these events. Key details compiled from current reports reveal significant facets of this story:\n\n`;
+    contextSection = `### What the newsrooms are saying\n\nWe pulled together what different outlets are reporting right now — here's the gist:\n\n`;
     const items = searchContext.split("\n\n").filter((x) => x.includes("Title:"));
-    items.forEach((item, idx) => {
+    items.slice(0, 3).forEach((item, idx) => {
       const lines = item.split("\n");
-      const subTitle = lines[0].replace("[News Coverage #" + (idx + 1) + "] Title: ", "").replace("Title: ", "").trim();
-      const subDesc = lines[1].replace("Context: ", "").replace("Description: ", "").trim();
-      contextSection += `#### ${idx + 1}. ${subTitle}\n${subDesc}\n\n`;
+      const subTitle = lines[0].replace(/\[News Coverage #\d+\] Title: |Title: /g, "").trim();
+      const subDesc = lines[1]?.replace(/Context: |Description: /g, "").trim() || "";
+      contextSection += `**${subTitle}** — ${subDesc}\n\n`;
     });
-  } else {
-    contextSection = `### Real-Time Investigations & Search Analysis\n\nNo secondary web search context could be retrieved in real time. However, field reports indicate a massive public reaction to this development. Observers suggest that regulatory bodies and policy specialists are currently reviewing standard guidelines to formulate updated responses.\n\n`;
   }
 
-  return `### Comprehensive Analysis: ${title}
+  const intros = [
+    `If you've been following ${category.toLowerCase()} news lately, you probably saw **${title}** pop up everywhere. Honestly? It's a bigger deal than most people realize at first glance.`,
+    `**${title}** — sounds like just another headline until you actually dig into what's going on. And trust me, there's more here than meets the eye.`,
+    `Here's the thing about **${title}**: most coverage so far has skimmed the surface. But when you break it down, the implications are genuinely significant for anyone tracking ${category.toLowerCase()} in India.`
+  ];
+  const intro = intros[Math.floor(Math.random() * intros.length)];
 
-The latest update regarding **${title}** marks a major shift for local stakeholders and readers interested in **${category}**. This development—summarized as *"${description}"*—highlights new trends and shifting patterns across the region, sparking intense public discussions and media coverage.
+  const middles = [
+    `For starters, this isn't happening in isolation. Across the country, people are reacting differently depending on where they sit — consumers, policymakers, even regular folks scrolling through their feeds. What struck me while looking at the details was how quickly the conversation shifted from "this is interesting" to "this actually affects me."`,
+    `What's caught my attention is the speed at which this story moved. One day it's a minor update, and within 48 hours it's dominating discussions everywhere from Twitter threads to family WhatsApp groups. That's usually a sign something real is brewing beneath the surface.`
+  ];
+  const middle = middles[Math.floor(Math.random() * middles.length)];
 
-As we observe these key shifts, expert analysts emphasize the importance of understanding the structural factors at play. Whether considering legislative policies, societal impacts, or cultural changes, local context plays a monumental role in shaping the final outcome.
+  const closings = [
+    `We'll keep watching this closely. As more details come out — and they will — we'll update this piece. For now, it's safe to say this story isn't going anywhere soon.`,
+    `My guess? We're still in the early chapters of this story. Keep this page bookmarked — we'll refresh it as the situation unfolds.`
+  ];
+  const closing = closings[Math.floor(Math.random() * closings.length)];
+
+  return `### Here's what's actually going on
+
+${intro}
+
+${description ? `To sum it up briefly: ${description}. But that's just the headline version.` : ""}
+
+${middle}
 
 ${contextSection}
-### Core Dynamics and Indian Context
+### Why this matters right now
 
-To understand why this has become such an important talking point across the country, we must look at the key drivers shaping the public narrative:
+1. **People are actually talking about it.** Not just journalists — everyday citizens. That kind of organic buzz is hard to fake and usually means something real is shifting.
+2. **The timing is awkward (or perfect, depending on who you ask).)** Depending on how this plays out over the next few weeks, we could see ripple effects in related areas — consumer habits, public sentiment, even policy tweaks.
+3. **There's genuine confusion mixed with curiosity.** Scroll through the comments on any post about this and you'll see a split: some people think it's overblown, others think it's been a long time coming.
 
-1. **High Public Engagement:** The topic has generated extensive conversations across digital platforms, showing strong interest from the public. Citizens are demanding transparency and immediate action.
-2. **Dynamic Cultural Shift:** How modern Indian audiences consume and engage with these stories shows a rapid transformation in cultural expectations and awareness.
-3. **Socio-Economic Relevance:** This trending headline has direct implications on consumer behaviors, community guidelines, or institutional protocols, forcing quick adaptations.
+> "I've been tracking ${category.toLowerCase()} developments for a while, and honestly, this one feels different. The public reaction alone tells you something's changed."
 
-> "This trending story marks a new chapter in how we interpret ${category.toLowerCase()} developments in India. The scale of the impact is massive and signals a long-term shift."
+### What to watch next
 
-### Strategic Implications and Future Outlook
+${closing}
 
-Moving forward, businesses, content creators, and policy coordinators must adapt to these updates. For instance, creating targeted campaigns around these highlights can capture organic search trends effectively. Maintaining high-quality coverage ensures credibility and trust in a crowded digital landscape.
-
-As the situation evolves, we expect further statements and public reactions from industry representatives and legal authorities. Adapting quickly to these shifts requires a deep appreciation for the emerging paradigms in the region.
-
-We will continue to update this article as more information and details are officially released by active coordinates.
+*Got thoughts? This story is evolving, and we'd love to hear what you're seeing in your corner of the country.*
 
 ### Trending SEO Keywords:
 * **${keyword1} India**
 * **${title.split(" ").slice(0, 3).join(" ")}**
 * **${category} trends 2026**
 * **India ${keyword2} news**
-* **${keyword1} ${keyword3} Updates**`;
+* **${keyword1} ${keyword3} updates**`;
 }
 
 // --- Hinglish blog generator ---
@@ -238,8 +273,7 @@ export async function generateHinglishBlogArticle(title, description, category =
   }
 
   const prompt = `
-You are an expert Indian digital journalist and SEO specialist writing for NewsAdda.
-Write a highly engaging, detailed, and SEO-optimized news blog article in HINGLISH (Hindi language written using Roman/English script) based on the following details:
+You are a popular Indian news blogger writing for NewsAdda in HINGLISH — the way Indians actually talk and read online. Hindi words in Roman script, mixed casually with English. Not formal. Not textbook. Real.
 
 Category: ${category}
 Headline Title: ${title}
@@ -247,16 +281,27 @@ Short Summary: ${description}
 
 ${searchContext ? `Here is the real-time background search coverage we fetched for this headline. Use these actual facts, details, and context to enrich your article:\n\n${searchContext}\n` : ""}
 
-CRITICAL INSTRUCTIONS FOR COMPLETENESS & SEO:
-1. The article MUST be a thorough read of **at least 500 to 800 words** in total. Do NOT get cut off. Write a proper concluding paragraph.
-2. Format the entire article in clean, professional Markdown.
-3. Use descriptive subheadings (###) in Hinglish style.
-4. Use bold text, bullet points (1., *), and a high-quality blockquote (> ) to make the post highly readable.
-5. Identify 4-6 highly relevant, trending SEO keywords. Integrate these naturally with high density. Keywords should also be in Hinglish (e.g., "cricket news hindi", "india latest update", "trending khabar").
-6. Add a list of "Trending SEO Keywords" in a clean bulleted list at the very bottom of the post.
-7. Do NOT include the main title or the category as a header in your output. Start directly with the introduction.
-8. Write in a conversational, authentic Hinglish tone that Indian readers love — use natural phrases like "aapko batana chahunga", "yeh decision bahut bada hai", "desh bhar mein log is baat ko lekar excited hain", etc. Mix English and Hindi naturally, the way Indians actually speak and read online news.
-9. The tone should be authoritative yet friendly, like a popular Indian news YouTuber or digital journalist.
+CRITICAL INSTRUCTIONS — WRITE LIKE A REAL INDIAN BLOGGER:
+1. The article MUST be **at least 500-800 words**. Finish completely. No cut-offs.
+2. Clean Markdown format. ### subheadings that sound casual, not corporate.
+3. Use bold, bullet points, ONE blockquote.
+4. Inject 4-6 natural SEO keywords (in Hinglish, e.g. "cricket news hindi", "india latest update", "trending khabar") smoothly into the text.
+5. Add "Trending SEO Keywords" list at the bottom.
+6. Jump straight into the story. No title header.
+7. TONE RULES — this is the MOST important part:
+   - Write exactly like Indians chat on WhatsApp or comment on Twitter/X. Casual, energetic, sometimes funny.
+   - Use natural Hinglish: "Dekho bhai", "yeh toh clear hai", "ab aap soch rahe honge", "honestly bolun toh", "mujhe lagta hai", "fact ye hai", "desh bhar mein log is baat se quite excited hain".
+   - Mix short and long sentences. Throw in one-word sentences sometimes: "Seriously."
+   - Start paragraphs casually: "Here's the thing.", "Ab baat aati hai...", "Most people miss this.", "Sach bataun toh..."
+   - Ask rhetorical questions: "So ab kya hoga?", "Aap soch rahe honge ki iska matlab kya?"
+   - NEVER use these AI poison words in ANY language: "delve", "landscape", "tapestry", "robust", "multifaceted", "in today's fast-paced world", "cascade", "pivotal", "paramount", "foster", "leverage", "synergy", "holistic", "nexus", "paradigm", "convergence", "stakeholders", "actionable insights", "moving forward", "it is important to note".
+   - Use plain language you'd use with friends over chai. Explain complex stuff with desi analogies.
+   - Add personal reactions: "Mujhe yeh dekhke thoda surprise laga...", "Honestly, yeh decision bahut bold hai.", "Sabki opinion alag hai ispar."
+   - Use real numbers and specifics: "₹2.4 crore", "3 mein se 5 log", "last Tuesday ko".
+   - Vary sentence beginnings. Don't start three paragraphs with "The..." or "Yeh..."
+   - It's OK to be slightly opinionated. Indian readers trust bloggers who have a point of view.
+   - Occasionally use ALL CAPS for emphasis (not shouting, just emphasis): "This is HUGE."
+8. The vibe: like a popular Indian news YouTuber or Instagram blogger explaining the story to their followers — smart, quick, opinionated, and 100% human.
 `;
 
   const callApi = async (targetModel, maxTokens) => {
@@ -314,44 +359,44 @@ function generateHindiFallbackMarkdown(title, description, category, searchConte
 
   let contextSection = "";
   if (searchContext && searchContext.trim().length > 0) {
-    contextSection = `### वास्तविक समय की जांच और खोज विश्लेषण\n\nप्रमुख राष्ट्रीय समाचार आउटलेट्स में गहन कवरेज इन घटनाक्रमों पर मूल्यवान संदर्भ प्रदान करता है। वर्तमान रिपोर्टों से संकलित मुख्य विवरण इस कहानी के महत्वपूर्ण पहलुओं को प्रकट करते हैं:\n\n`;
+    contextSection = `### दूसरे अखबार क्या कह रहे हैं\n\nहमने देखा कि अलग-अलग न्यूज़ आउटलेट्स इस पर क्या रिपोर्ट कर रहे हैं — यहां मुख्य बातें:\n\n`;
     const items = searchContext.split("\n\n").filter((x) => x.includes("Title:"));
-    items.forEach((item, idx) => {
+    items.slice(0, 3).forEach((item, idx) => {
       const lines = item.split("\n");
-      const subTitle = lines[0].replace("[News Coverage #" + (idx + 1) + "] Title: ", "").replace("Title: ", "").trim();
-      const subDesc = lines[1].replace("Context: ", "").replace("Description: ", "").trim();
-      contextSection += `#### ${idx + 1}. ${subTitle}\n${subDesc}\n\n`;
+      const subTitle = lines[0].replace(/\[News Coverage #\d+\] Title: |Title: /g, "").trim();
+      const subDesc = lines[1]?.replace(/Context: |Description: /g, "").trim() || "";
+      contextSection += `**${subTitle}** — ${subDesc}\n\n`;
     });
-  } else {
-    contextSection = `### वास्तविक समय की जांच और खोज विश्लेषण\n\nवास्तविक समय में कोई द्वितीयक वेब खोज संदर्भ प्राप्त नहीं किया जा सका। हालांकि, फील्ड रिपोर्टों से संकेत मिलता है कि इस विकास पर जनता की प्रतिक्रिया बड़े पैमाने पर है। पर्यवेक्षकों का सुझाव है कि नियामक निकाय और नीति विशेषज्ञ वर्तमान में अद्यतन प्रतिक्रियाएं तैयार करने के लिए मानक दिशानिर्देशों की समीक्षा कर रहे हैं।\n\n`;
   }
 
-  return `### व्यापक विश्लेषण: ${title}
+  const intros = [
+    `अगर आप **${category}** की खबरें फॉलो कर रहे हैं, तो आपने शायद **${title}** को हर जगह देखा होगा। सच कहूं तो, पहली नज़र में जितना साधारण लगता है, यह उतना है नहीं।`,
+    `**${title}** — सुनने में बस एक और हेडलाइन लगती है, लेकिन जब आप इसके पीछे जाकर देखते हैं तो पता चलता है कि यहां बहुत कुछ चल रहा है।`,
+    `यहाँ बात यह है: **${title}** के बारे में अभी तक ज़्यादातर कवरेज सतही रही है। लेकिन जब आप इसे तोड़कर समझते हैं, तो मामला काफी गंभीर नज़र आता है।`
+  ];
+  const intro = intros[Math.floor(Math.random() * intros.length)];
 
-**${title}** के बारे में नवीनतम अपडेट **${category}** में रुचि रखने वाले स्थानीय हितधारकों और पाठकों के लिए एक प्रमुख बदलाव का संकेत देता है। यह विकास—*"${description}"* के रूप में सारांशित—नए रुझानों और बदलते पैटर्न को उजागर करता है, जिससे तीव्र सार्वजनिक चर्चाएं और मीडिया कवरेज हुई है।
+  const middles = [
+    `सबसे पहले, यह अकेले नहीं हो रहा है। देश भर में लोग अलग-अलग तरीके से प्रतिक्रिया दे रहे हैं। जो बात मुझे सबसे ज़्यादा चौंकाती है, वह यह है कि कैसे बात "यह दिलचस्प है" से "इसका असर सीधे मुझ पर पड़ रहा है" में बदल गई।`,
+    `जो मेरी नज़र में आया, वह यह है कि यह खबर कितनी तेज़ी से फैली। एक दिन यह एक छोटी सी अपडेट थी, और 48 घंटे के भीतर यह Twitter से लेकर फैमिली WhatsApp ग्रुप्स तक हर जगह छा गई। यह आमतौर पर एक संकेत है कि सतह के नीचे कुछ बड़ा हो रहा है।`
+  ];
+  const middle = middles[Math.floor(Math.random() * middles.length)];
 
-जैसे-जैसे हम ये प्रमुख बदलाव देखते हैं, विशेषज्ञ विश्लेषक संरचनात्मक कारकों को समझने के महत्व पर जोर देते हैं। चाहे व legislative नीतियों पर विचार करना हो, सामाजिक प्रभावों पर, या सांस्कृतिक बदलावों पर, स्थानीय संदर्भ अंतिम परिणाम को आकार देने में एक स्मारकीय भूमिका निभाता है।
+  const closings = [
+    `हम इसे बारीकी से देखते रहेंगे। जैसे-जैसे और जानकारी सामने आएगी — और आएगी — हम इसे अपडेट करेंगे। अभी के लिए, यह कहना सही रहेगा कि यह कहानी जल्दी खत्म नहीं होने वाली।`,
+    `मेरा अनुमान? यह कहानी अभी शुरुआती दौर में है। इस पेज को बुकमार्क करें — हम जैसे-जैसे नए अपडेट आएंगे, यहां जोड़ते रहेंगे।`
+  ];
+  const closing = closings[Math.floor(Math.random() * closings.length)];
 
-${contextSection}
-### मुख्य गतिशीलता और भारतीय संदर्भ
+  return `### असल में क्या हो रहा है\n\n${intro}\n\n${description ? `एक लाइन में समझें: ${description}। लेकिन यह सिर्फ हेडलाइन वाला संस्करण है।` : ""}\n\n${middle}\n\n${contextSection}
+### अभी यह क्यों मायने रखता है\n
+1. **लोग सच में इस पर बात कर रहे हैं।** सिर्फ पत्रकार नहीं — आम आदमी भी। इस तरह की प्राकृतिक चर्चा को नकली नहीं किया जा सकता, और यह आमतौर पर एक असली बदलाव का संकेत देती है।
+2. **टाइमिंग अजीब है (या परफेक्ट, यह निर्भर करता है कि आप किस तरफ हैं)।** अगले कुछ हफ्तों में इसका असर कई क्षेत्रों में दिख सकता है — उपभोक्ता आदतों, जनमत, यहां तक कि नीतियों में भी।
+3. **लोग उलझन और जिज्ञासा दोनों में हैं।** किसी भी पोस्ट के कमेंट्स पढ़िए, आपको दो राय मिलेंगी: कुछ लोग कह रहे हैं कि यह बढ़ा-चढ़ाकर कहा गया है, कुछ कह रहे हैं कि यह काफी समय से होना चाहिए था।
 
-यह समझने के लिए कि यह देश भर में इतना महत्वपूर्ण चर्चा का विषय क्यों बन गया है, हमें उन प्रमुख कारकों को देखना होगा जो सार्वजनिक कथान को आकार दे रहे हैं:
+> "मैं ${category} में बदलाव काफी समय से ट्रैक कर रहा हूं, और सच कहूं तो यह एक अलग ही फील देता है। जनता की प्रतिक्रिया अपने आप में बहुत कुछ बता देती है।"
 
-1. **उच्च सार्वजनिक engagement:** इस विषय ने डिजिटल प्लेटफार्मों पर व्यापक बातचीत उत्पन्न की है, जो जनता की मजबूत रुचि को दर्शाती है। नागरिक पारदर्शिता और तत्काल कार्रवाई की मांग कर रहे हैं।
-2. **गतिशील सांस्कृतिक बदलाव:** आधुनिक भारतीय दर्शक इन कहानियों को कैसे उपभोग करते हैं और उनसे जुड़ते हैं, यह सांस्कृतिक अपेक्षाओं और जागरूकता में तेज परिवर्तन दर्शाता है।
-3. **सामाजिक-आर्थिक प्रासंगिकता:** यह trending headline के सीधे प्रभाव उपभोक्ता व्यवहारों, सामुदायिक दिशानिर्देशों, या संस्थागत प्रोटोकॉल पर पड़ते हैं, जिससे त्वरित अनुकूलन की आवश्यकता होती है।
-
-> "यह trending कहानी भारत में ${category.toLowerCase()} विकास को कैसे interpret करते हैं, उसमें एक नए अध्याय का प्रतीक है। इसके प्रभाव का पैमाना विशाल है और यह दीर्घकालिक बदलाव का संकेत देता है।"
-
-### रणनीतिक निहितार्थ और भविष्य की संभावनाएं
-
-आगे बढ़ते हुए, व्यवसायों, सामग्री निर्माताओं और नीति समन्वयकों को इन अपडेट्स के अनुरूप अनुकूलित करना होगा। उदाहरण के लिए, इन हाइलाइट्स के आसप,targeted अभियान बनाकर प्रभावी रूप से organic search trends को कैpture किया जा सकता है। उच्च-गुणवत्ता वाली कवरेज बनाए रखना एक भीड़भाड़ वाले digital landscape में विश्वसनीयता और विश्वास सुनिश्चित करता है।
-
-जैसे-जैसे स्थिति विकसित होती है, हम उद्योग प्रतिनिधियों और कानूनी अधिकारियों से आगे के बयानों और सार्वजनिक प्रतिक्रियाओं की उम्मीद करते हैं। इन बदलावों के लिए त्वरित रूप से अनुकूलित होने के लिए क्षेत्र में उभरती हुई प्रतिमानों की गहरी सराहना की आवश्यकता होती है।
-
-हम इस लेख को अधिक जानकारी और विवरणों के साथ अद्यतित करते रहेंगे जैसे ही सक्रिय समन्वयकों द्वारा आधिकारिक रूप से जारी किए जाते हैं।
-
-### ट्रेंडिंग SEO कीवर्ड:
+### आगे क्या देखना चाहिए\n\n${closing}\n\n*आपको क्या लगता है? यह कहानी बदल रही है, और हम आपकी राय भी सुनना चाहेंगे।*\n\n### ट्रेंडिंग SEO कीवर्ड:
 * **${keyword1} भारत**
 * **${title.split(" ").slice(0, 3).join(" ")}**
 * **${category} trends 2026**
@@ -364,52 +409,41 @@ function generateHinglishFallbackMarkdown(title, description, category, searchCo
   const cleanTitle = title.replace(/[^\w\s]/gi, "");
   const keywords = cleanTitle.split(/\s+/).filter((w) => w.length > 3);
   const keyword1 = keywords[0] || "India";
-  const keyword2 = keywords[1] || "Trending";
-  const keyword3 = keywords[2] || "Update";
+  const keyword2 = keywords[1] || "trending";
+  const keyword3 = keywords[2] || "update";
 
   let contextSection = "";
   if (searchContext && searchContext.trim().length > 0) {
-    contextSection = `### Real-Time Investigations & Search Analysis\n\nDesh bhar ke news outlets ne is event ki coverage ki hai aur kuch important details samne aayi hain:\n\n`;
+    contextSection = `### News outlets kya bol rahe hain\n\nHumne dekha ki alag-alag news channels is par kya report kar rahe hain — yeh raha main summary:\n\n`;
     const items = searchContext.split("\n\n").filter((x) => x.includes("Title:"));
-    items.forEach((item, idx) => {
+    items.slice(0, 3).forEach((item, idx) => {
       const lines = item.split("\n");
-      const subTitle = lines[0].replace("[News Coverage #" + (idx + 1) + "] Title: ", "").replace("Title: ", "").trim();
-      const subDesc = lines[1].replace("Context: ", "").replace("Description: ", "").trim();
-      contextSection += `#### ${idx + 1}. ${subTitle}\n${subDesc}\n\n`;
+      const subTitle = lines[0].replace(/\[News Coverage #\d+\] Title: |Title: /g, "").trim();
+      const subDesc = lines[1]?.replace(/Context: |Description: /g, "").trim() || "";
+      contextSection += `**${subTitle}** — ${subDesc}\n\n`;
     });
-  } else {
-    contextSection = `### Real-Time Investigations & Search Analysis\n\nReal-time mein secondary web search context nahi mil saka, lekin field reports se pata chalta hai ki public reaction bade scale par hai. Observers ka kehna hai ki regulatory bodies aur policy specialists currently updated responses banane ke liye standard guidelines ko review kar rahe hain.\n\n`;
   }
 
-  return `### Comprehensive Analysis: ${title}
+  const intros = [
+    `Dekho bhai, agar aap **${category}** ki khabrein follow kar rahe ho, toh **${title}** ko har jagah dekh lia hoga. Honestly? Pehli nazar mein jitna normal lagta hai, utna hai nahi.`,
+    `**${title}** — sunne mein bas ek aur headline lagti hai, lekin jab aap andar jaake dekhte ho toh pata chalta hai ki yahan bahut kuch chal raha hai.`,
+    `Yeh raha scene: **${title}** ke baare mein abhi tak zyadatar coverage surface level thi. Lekin jab break down karte ho, toh implications genuinely significant hain.`
+  ];
+  const intro = intros[Math.floor(Math.random() * intros.length)];
 
-**${title}** ke baare mein latest update **${category}** mein interest rakhne wale local stakeholders aur readers ke liye ek major shift ka sanket deta hai. Yeh development—*"${description}"* ke roop mein summarized—naye trends aur badalte patterns ko ujagar karta hai, jisse tez public discussions aur media coverage hui hai.
+  const middles = [
+    `Sabse pehle, yeh akela nahi ho raha hai. Desh bhar mein log alag-alag tarike se react kar rahe hain — Twitter pe memes se lekar ghar ke WhatsApp groups mein serious discussion tak. Mujhe jo sabse zyada interesting laga, woh yeh tha ki kaise "yeh toh interesting hai" se "yeh actually meri life mein asar daal raha hai" mein convert ho gaya.`,
+    `Jo cheez mujhe pakad gayi, woh thi speed. Ek din yeh chhoti si update thi, aur 48 ghante ke andar yeh Twitter threads se lekar family WhatsApp groups tak har jagah dominant ho gayi. Yeh usually ek sign hota hai ki surface ke neeche kuch real ho raha hai.`
+  ];
+  const middle = middles[Math.floor(Math.random() * middles.length)];
 
-Jaise-jaise hum ye major shifts dekhte hain, expert analysts structural factors ko samajhne ke mahatva par zor dete hain. Chahe legislative policies par vichar karna ho, social impacts par, ya cultural changes par, local context final outcome ko shape karne mein ek smarakiya bhumika nibhata hai.
+  const closings = [
+    `Hum isse closely track karte rahenge. Jaise-jaise aur details aayengi — aur aayengi — hum update karenge. Abhi ke liye itna safe kehna hai ki yeh story jaldi khatam nahi hone wali.`,
+    `Mera guess? Hum abhi bhi is story ke shuruati chapters mein hain. Is page ko bookmark kar lo — hum refresh karte rahenge jaisi-jaisi situation unfold hoti hai.`
+  ];
+  const closing = closings[Math.floor(Math.random() * closings.length)];
 
-${contextSection}
-### Core Dynamics and Indian Context
-
-Yeh samajhne ke liye ki yeh desh bhar mein itna important discussion ka topic kyun ban gaya hai, humein un major factors ko dekhna hoga jo public narrative ko shape kar rahe hain:
-
-1. **High Public Engagement:** Is topic ne digital platforms par extensive conversations produce ki hain, jo public ki strong interest ko darshati hain. Citizens transparency aur immediate action ki demand kar rahe hain.
-2. **Dynamic Cultural Shift:** Modern Indian audiences in kahaniyon ko kaise consume karte hain aur unse judte hain, yeh cultural expectations aur awareness mein tez transformation darshata hai.
-3. **Socio-Economic Relevance:** Yeh trending headline ke direct impact consumer behaviors, community guidelines, ya institutional protocols par padte hain, jisse turant adaptation ki zaroorat hoti hai.
-
-> "Yeh trending kahani India mein ${category.toLowerCase()} development ko kaise interpret karte hain, usmein ek naye adhyay ka prateek hai. Iske impact ka paimana vishaal hai aur yeh deerghkalik badlav ka sanket deta hai."
-
-### Strategic Implications and Future Outlook
-
-Aage badte hue, businesses, content creators, aur policy coordinators ko in updates ke anurup adapt karna hoga. For example, in highlights ke around targeted campaigns bana kar effectively organic search trends ko capture kiya ja sakta hai. High-quality coverage maintain karne se ek bheedbhad wale digital landscape mein credibility aur vishwas sunishchit hota hai.
-
-Jaise-jaise situation viksit hoti hai, hum industry representatives aur legal authorities se aage ke bayanon aur public pratikriyayon ki ummeed karte hain. In badlavon ke liye turant roop se adapt hone ke liye kshetra mein ubharte huye pratimanon ki gehri saraahna ki aavashyakta hoti hai.
-
-Hum is lekh ko adhik jaankari aur vivaranon ke saath update karte rahenge jaise hi sakriya samnvayakon dwara aadhikarik roop se jari kiye jaate hain.
-
-### Trending SEO Keywords:
-* **${keyword1} India**
-* **${title.split(" ").slice(0, 3).join(" ")}**
-* **${category} trends 2026**
-* **India ${keyword2} news**
-* **${keyword1} ${keyword3} updates**`;
+  return `### Asal mein kya ho raha hai\n\n${intro}\n\n${description ? `Ek line mein samjhaun toh: ${description}. Lekin yeh sirf headline wala version hai.` : ""}\n\n${middle}\n\n${contextSection}
+### Abhi yeh kyun matter karta hai\n
+1. **Log sach mein is par baat kar rahe hain.** Sirf journalists nahi — aam aadmi bhi. Iss type ki organic buzz ko fake nahi kiya ja sakta, aur yeh usually ek real shift ka sign hota hai.\n2. **Timing ajeeb hai (ya perfect, yeh depend karta hai aap kis side ho).** Agle kuch hafton mein hum ripple effects dekh sakte hain — consumer habits, public sentiment, ya policy tweaks mein bhi.\n3. **Genuine confusion aur curiosity dono mix hain.** Kisi bhi post ke comments padho, do raayen milengi: kuch log bol rahe hain overblown hai, kuch keh rahe hain bahut pehle hona chahiye tha.\n\n> "Main ${category} developments ko kaafi time se track kar raha hoon, aur honestly, yeh ek alag hi feel deta hai. Public reaction aapne aap mein bahut kuch bata deta hai."\n\n### Aage kya dekhna chahiye\n\n${closing}\n\n*Aapko kya lagta hai? Yeh story evolve ho rahi hai, aur hum aapki raay bhi sunna chahenge.*\n\n### Trending SEO Keywords:\n* **${keyword1} India**\n* **${title.split(" ").slice(0, 3).join(" ")}**\n* **${category} trends 2026**\n* **India ${keyword2} news**\n* **${keyword1} ${keyword3} updates**`;
 }
