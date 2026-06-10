@@ -7,6 +7,10 @@ import Image from "next/image";
 import Navbar from "../../components/Navbar";
 import SafeAdSlot from "../../components/seo/SafeAdSlot";
 import GoldPriceMarquee from "../../components/GoldPriceMarquee";
+import BreakingNewsTicker from "../../components/BreakingNewsTicker";
+import LeftNewsRail from "../../components/LeftNewsRail";
+import RightNewsRail from "../../components/RightNewsRail";
+import { readDatabase } from "../../services/db";
 
 export const metadata = {
   title: "NewsAdda — Trusted & Fast News",
@@ -40,7 +44,9 @@ export const metadata = {
   },
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const posts = await readDatabase();
+
   return (
     <html lang="en">
       <head>
@@ -68,19 +74,19 @@ export default function RootLayout({ children }) {
           `}
         </Script>
 
-        {/* Desktop Left Skyscraper Gutter Ad (Fixed viewport side rails) */}
-        <div className="desktop-side-ad left-side-ad">
-          <SafeAdSlot slotType="sidebar" />
-        </div>
+        {/* Desktop Left News Rail (Fixed viewport side rails) */}
+        <LeftNewsRail posts={posts} />
 
-        {/* Desktop Right Skyscraper Gutter Ad (Fixed viewport side rails) */}
-        <div className="desktop-side-ad right-side-ad">
-          <SafeAdSlot slotType="sidebar" />
-        </div>
+        {/* Desktop Right News Rail (Fixed viewport side rails) */}
+        <RightNewsRail posts={posts} />
+
 
         <div className="app-container">
           {/* Interactive Header Navigation */}
           <Navbar />
+
+          {/* Horizontal Breaking News Ticker */}
+          <BreakingNewsTicker posts={posts} />
 
           {/* Core Content Viewport */}
           {children}
@@ -106,11 +112,13 @@ export default function RootLayout({ children }) {
                 NewsAdda is a highly-optimized news platform utilizing server-rendered
                 Next.js for elite Google SEO indexation, providing fast and trusted updates.
               </p>
-              <div className="footer-ad-section">
-                <div className="footer-ad-label">Sponsored Advertisement</div>
-                <span className="footer-ad-close" aria-hidden="true">×</span>
-                <SafeAdSlot slotType="leaderboard" className="footer-inline-ad-slot" />
-              </div>
+              {process.env.NODE_ENV === "production" && (
+                <div className="footer-ad-section">
+                  <div className="footer-ad-label">Sponsored Advertisement</div>
+                  <span className="footer-ad-close" aria-hidden="true">×</span>
+                  <SafeAdSlot slotType="leaderboard" className="footer-inline-ad-slot" />
+                </div>
+              )}
               <div className="footer-links" style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "16px", margin: "12px 0" }}>
                 <Link href="/">Home Feed</Link>
                 <Link href="/about">About Us</Link>

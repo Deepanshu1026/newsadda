@@ -1,4 +1,5 @@
 import { SEO_CONFIG, getCanonicalUrl } from "./config";
+import { getAuthorProfile } from "../authorService";
 
 /**
  * Generates an Organization Schema (JSON-LD)
@@ -85,23 +86,22 @@ export function getBreadcrumbSchema(items = []) {
  * @param {Array<string>} [sameAs] - Social or verified credentials links
  */
 export function getAuthorSchema(authorName, bio = "", sameAs = []) {
-  const slug = authorName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const profile = getAuthorProfile(authorName);
+  const socialSameAs = profile.socials ? Object.values(profile.socials).filter(Boolean) : [];
+  
   return {
     "@context": "https://schema.org",
     "@type": "Person",
-    "@id": `${SEO_CONFIG.baseUrl}/author/${slug}/#person`,
-    "name": authorName,
-    "jobTitle": "Senior Journalist",
+    "@id": `${SEO_CONFIG.baseUrl}/author/${profile.slug}/#person`,
+    "name": profile.name,
+    "jobTitle": profile.title,
     "worksFor": {
       "@type": "Organization",
       "name": SEO_CONFIG.siteName
     },
-    "description": bio || `${authorName} is an experienced writer and political commentator covering major affairs in South Asia for NewsAdda.`,
-    "url": getCanonicalUrl(`/author/${slug}`),
-    "sameAs": sameAs.length > 0 ? sameAs : [
-      `https://twitter.com/${slug}`,
-      `https://linkedin.com/in/${slug}`
-    ]
+    "description": profile.shortBio || bio || `${profile.name} is an experienced writer and commentator covering major affairs for NewsAdda.`,
+    "url": getCanonicalUrl(`/author/${profile.slug}`),
+    "sameAs": socialSameAs.length > 0 ? socialSameAs : sameAs
   };
 }
 
@@ -111,8 +111,8 @@ export function getAuthorSchema(authorName, bio = "", sameAs = []) {
  */
 export function getNewsArticleSchema(post) {
   const articleUrl = getCanonicalUrl(`/posts/${post.id}`);
-  const authorSlug = (post.author || SEO_CONFIG.defaultAuthor).toLowerCase().replace(/[^a-z0-9]+/g, "-");
-  const authorProfileUrl = getCanonicalUrl(`/author/${authorSlug}`);
+  const profile = getAuthorProfile(post.author || SEO_CONFIG.defaultAuthor);
+  const authorProfileUrl = getCanonicalUrl(`/author/${profile.slug}`);
 
   return {
     "@context": "https://schema.org",
@@ -131,8 +131,8 @@ export function getNewsArticleSchema(post) {
     "dateModified": post.publishedAt, // Modified matches published for simplicity unless explicitly tracked
     "author": {
       "@type": "Person",
-      "name": post.author || SEO_CONFIG.defaultAuthor,
-      "jobTitle": "Journalist",
+      "name": profile.name,
+      "jobTitle": profile.title,
       "url": authorProfileUrl
     },
     "publisher": {

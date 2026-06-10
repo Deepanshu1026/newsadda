@@ -56,6 +56,7 @@ export default function StickyBottomAd() {
   if (!visible) return null;
 
   const isReal = isProduction || forceLive;
+  if (!isReal) return null;
 
   return (
     <div className="sticky-bottom-ad-container">

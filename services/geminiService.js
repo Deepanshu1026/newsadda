@@ -19,18 +19,46 @@ Category: ${category}
 Headline Title: ${title}
 Short Summary: ${description}
 
-CRITICAL INSTRUCTIONS:
-1. Format in clean Markdown. Use ### subheadings that sound like a real blog, not a research paper.
-2. Use bold, bullet points, ONE blockquote. Make it readable.
-3. If code makes sense, add a short code block (\`\`\`javascript ... \`\`\`).
-4. Do NOT start with the title as a header. Jump into the story.
-5. Write at least 3-4 solid paragraphs, ideally more.
+CRITICAL INSTRUCTIONS — WRITE WITH AN ANALYTICAL PATTERN:
+1. Format in clean Markdown. The article MUST strictly follow this exact Markdown structure:
+
+### Introduction
+[A strong, gripping hook that goes beyond basic facts to set the tone and narrative for the article.]
+
+### Context
+[A detailed explanation of the event context, timeline, participants, and immediate settings.]
+
+### Background Information
+[Provide historical context, preceding events, team/person history, and prior trends that led up to this point.]
+
+### Analysis
+[A deep analytical breakdown of the event, discussing key player performances, strategy execution, expert quotes/opinions, and tactical elements or broader implications.]
+
+### Key Takeaways
+- [High-impact takeaway 1]
+- [High-impact takeaway 2]
+- [High-impact takeaway 3]
+- [High-impact takeaway 4]
+
+### Conclusion
+[What happens next, future prospects, tournament/industry impact, next matches, or subsequent developments.]
+
+### Trending SEO Keywords
+- [Natural SEO Tag 1]
+- [Natural SEO Tag 2]
+- [Natural SEO Tag 3]
+- [Natural SEO Tag 4]
+- [Natural SEO Tag 5]
+
+2. Do NOT start with the title as a header. Start directly with the "### Introduction" section.
+3. Use bold, bullet points, ONE blockquote. Make it readable.
+4. If code makes sense, add a short code block (\`\`\`javascript ... \`\`\`).
+5. Write at least 4-5 solid sections matching the headings above.
 6. HUMAN TONE (break these and it sounds like a bot):
    - Use contractions: don't, can't, it's, won't, that's.
    - Mix short and long sentences. Start some paragraphs casually.
    - Avoid AI poison words: "delve", "landscape", "tapestry", "robust", "multifaceted", "in today's fast-paced world", "cascade", "pivotal", "paramount", "foster", "leverage", "synergy", "holistic".
    - Add human touches: "Here's what surprised me...", "Not everyone's convinced, and honestly? Fair.", "If you're thinking [X], you're not alone."
-   - Explain complex stuff with real-world analogies.
    - Vary sentence openings.
    - Use specific numbers and examples.
 `;
@@ -58,5 +86,49 @@ function generateFallbackMarkdown(title, description, category) {
   ];
   const intro = intros[Math.floor(Math.random() * intros.length)];
 
-  return `### What's actually happening\n\n${intro}\n\n${description ? `To recap: ${description}. But that's just the surface.` : ``}\n\nI've been tracking this space long enough to know that not every announcement deserves a second look. This one does. Not because the headline is loud, but because the underlying details suggest a meaningful change in how things work.\n\n### Why this isn't just another update\n\n1. **The timing is suspiciously good.** Right when the industry was looking for a way to move forward without breaking everything that already exists, this shows up. That's not coincidence — that's someone reading the room.\n2. **The details matter more than the announcement.** Press releases are designed to sound impressive. What caught my eye here was the specific improvement in real-world usage, not the marketing language.\n3. **People are already arguing about it.** Scroll through any forum thread on this and you'll find two camps: the skeptics who think it's overhyped, and the early adopters who've already started experimenting. Both sides have valid points, which is always a sign something real is happening.\n\n> "I've watched a lot of ${category.toLowerCase()} trends come and go. This one feels different — not because of the hype, but because of the quiet, steady adoption I'm seeing behind the scenes."\n\n### What to actually pay attention to\n\nIf you're a developer or someone who just likes staying ahead of the curve, here's my honest take: don't chase the headline. Look at the second-order effects. How does this change the way existing tools behave? What breaks? What gets easier?\n\nIn my experience, the biggest shifts in ${category.toLowerCase()} don't announce themselves with fireworks. They show up as a small note in a changelog that slowly rewrites how everyone works. This might be one of those moments.\n\nWe'll keep watching this as more details surface. If you're experimenting with it already, I'd genuinely love to hear what's working and what isn't.\n\n*Stay tuned — this story is still unfolding.*\n\n### Trending SEO Keywords:\n* **${keyword1} ${keyword2}**\n* **${title.split(" ").slice(0, 3).join(" ")}**\n* **${category} news 2026**\n* **${keyword1} updates India**\n* **${keyword3} latest trends**`;
+  return `### Introduction
+
+${intro}
+
+${description ? `To recap: ${description}. But that's just the surface.` : ``}
+
+### Context
+
+This event takes place within the context of recent developments in the ${category.toLowerCase()} category in India.
+
+### Background Information
+
+Historically, key events in this category have followed predictable paths. However, this development represents a major shift. Preceding events and trends suggest that the current scenario is forcing players and observers alike to adapt.
+
+### Analysis
+
+I've been tracking this space long enough to know that not every announcement deserves a second look. This one does. Not because the headline is loud, but because the underlying details suggest a meaningful change in how things work.
+
+Here are the key observations:
+1. **The timing is suspiciously good.** Right when the industry was looking for a way to move forward without breaking everything that already exists, this shows up.
+2. **The details matter more than the announcement.** Press releases are designed to sound impressive. What caught my eye here was the specific improvement in real-world usage.
+3. **People are already arguing about it.** Scroll through any forum thread on this and you'll find two camps: the skeptics who think it's overhyped, and the early adopters.
+
+> "I've watched a lot of ${category.toLowerCase()} trends come and go. This one feels different — not because of the hype, but because of the quiet, steady adoption I'm seeing behind the scenes."
+
+### Key Takeaways
+- The event has generated significant digital discussion across platforms.
+- It highlights dynamic cultural shifts in expectations and awareness.
+- Direct implications are visible on behaviors and institutional rules.
+- We expect further statements and actions from regulatory bodies and key figures in the near future.
+
+### Conclusion
+
+If you're a developer or someone who just likes staying ahead of the curve, here's my honest take: don't chase the headline. Look at the second-order effects. How does this change the way existing tools behave? What breaks? What gets easier?
+
+In my experience, the biggest shifts in ${category.toLowerCase()} don't announce themselves with fireworks. They show up as a small note in a changelog that slowly rewrites how everyone works. This might be one of those moments.
+
+We'll keep watching this as more details surface.
+
+### Trending SEO Keywords
+- ${keyword1} ${keyword2}
+- ${title.split(" ").slice(0, 2).join(" ")}
+- ${category} news 2026
+- ${keyword1} updates India
+- ${keyword3} latest trends`;
 }

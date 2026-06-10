@@ -2,6 +2,7 @@ import Link from "next/link";
 import ViewIncrementer from "./ViewIncrementer";
 import { SEO_CONFIG, getCanonicalUrl } from "../services/seo/config";
 import { getPostUrl } from "../lib/utils";
+import { getAuthorProfile } from "../services/authorService";
 import JsonLd from "./seo/JsonLd";
 import { getNewsArticleSchema, getBreadcrumbSchema, getFaqSchema } from "../services/seo/schema";
 import PerformanceImage from "./seo/PerformanceImage";
@@ -169,7 +170,8 @@ export default function ArticlePageContent({ post, relatedPosts, trendingPosts, 
   ]);
   const faqSchema = getFaqSchema(parseFaqsFromContent(post.content));
 
-  const authorSlug = (post.author || SEO_CONFIG.defaultAuthor).toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const authorProfile = getAuthorProfile(post.author || SEO_CONFIG.defaultAuthor);
+  const authorSlug = authorProfile.slug;
   const categorySlug = (post.category || "news").toLowerCase();
 
   return (
@@ -218,7 +220,7 @@ export default function ArticlePageContent({ post, relatedPosts, trendingPosts, 
                 <div className="article-meta">
                   <span>
                     By <Link href={`/author/${authorSlug}`} style={{ color: "var(--accent-primary)", fontWeight: "600", textDecoration: "none" }}>
-                      {post.author || SEO_CONFIG.defaultAuthor}
+                      {authorProfile.name}
                     </Link>
                   </span>
                   <span>•</span>
@@ -246,6 +248,141 @@ export default function ArticlePageContent({ post, relatedPosts, trendingPosts, 
 
               <div className="article-content">
                 {parseMarkdownToReact(post.content)}
+              </div>
+
+              {/* Premium Author Bio Box */}
+              <div 
+                style={{ 
+                  marginTop: "48px",
+                  padding: "32px",
+                  borderRadius: "16px",
+                  backgroundColor: "var(--bg-surface, rgba(255, 255, 255, 0.88))",
+                  border: "1px solid var(--border-subtle)",
+                  boxShadow: "var(--card-shadow)",
+                  backdropFilter: "blur(12px)",
+                  WebkitBackdropFilter: "blur(12px)",
+                  display: "flex",
+                  flexDirection: "row",
+                  gap: "24px",
+                  alignItems: "flex-start",
+                  flexWrap: "wrap"
+                }}
+                className="author-bio-card"
+              >
+                {/* Left Column: Avatar */}
+                <div 
+                  style={{ 
+                    width: "72px", 
+                    height: "72px", 
+                    borderRadius: "50%", 
+                    backgroundColor: authorProfile.avatarColor || "var(--accent-primary)",
+                    color: "#ffffff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "1.75rem",
+                    fontWeight: "800",
+                    fontFamily: "var(--font-display)",
+                    boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+                    flexShrink: 0
+                  }}
+                >
+                  {authorProfile.name.charAt(0)}
+                </div>
+
+                {/* Right Column: Bio info */}
+                <div style={{ flex: "1 1 300px" }}>
+                  <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "10px", marginBottom: "4px" }}>
+                    <Link 
+                      href={`/author/${authorProfile.slug}`}
+                      style={{ 
+                        fontSize: "1.25rem", 
+                        fontWeight: "800", 
+                        color: "var(--text-primary)", 
+                        textDecoration: "none",
+                        fontFamily: "var(--font-display)"
+                      }}
+                    >
+                      {authorProfile.name}
+                    </Link>
+                    {authorProfile.verified && (
+                      <span 
+                        style={{ 
+                          backgroundColor: "rgba(22, 163, 74, 0.08)", 
+                          color: "var(--accent-success, #16a34a)", 
+                          fontSize: "0.72rem", 
+                          fontWeight: "700", 
+                          padding: "3px 8px", 
+                          borderRadius: "20px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          border: "1px solid rgba(22, 163, 74, 0.15)"
+                        }}
+                      >
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        VERIFIED WRITER
+                      </span>
+                    )}
+                  </div>
+
+                  <div style={{ fontSize: "0.85rem", fontWeight: "600", color: "var(--text-muted)", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                    {authorProfile.title}
+                  </div>
+
+                  <p style={{ fontSize: "0.95rem", lineHeight: "1.6", color: "var(--text-secondary)", margin: "0 0 16px 0" }}>
+                    {authorProfile.shortBio}
+                  </p>
+
+                  {/* Expertise pills & Socials Row */}
+                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "16px", borderTop: "1px solid var(--border-subtle)", paddingTop: "16px" }}>
+                    {/* Expertise tags */}
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                      {authorProfile.expertise && authorProfile.expertise.slice(0, 3).map((exp, idx) => (
+                        <span 
+                          key={idx} 
+                          style={{ 
+                            fontSize: "0.75rem", 
+                            fontWeight: "600", 
+                            backgroundColor: "var(--bg-pill, #f4f4f5)", 
+                            color: "var(--text-secondary)", 
+                            padding: "4px 10px", 
+                            borderRadius: "6px",
+                            border: "1px solid var(--border-subtle)"
+                          }}
+                        >
+                          {exp}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Social channels */}
+                    <div style={{ display: "flex", gap: "16px" }}>
+                      {authorProfile.socials?.twitter && (
+                        <a 
+                          href={authorProfile.socials.twitter} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          style={{ color: "var(--accent-primary)", fontSize: "0.82rem", fontWeight: "600", display: "inline-flex", alignItems: "center", gap: "4px" }}
+                        >
+                          Twitter ↗
+                        </a>
+                      )}
+                      {authorProfile.socials?.linkedin && (
+                        <a 
+                          href={authorProfile.socials.linkedin} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          style={{ color: "var(--accent-primary)", fontSize: "0.82rem", fontWeight: "600", display: "inline-flex", alignItems: "center", gap: "4px" }}
+                        >
+                          LinkedIn ↗
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Intermediate Ad slot */}

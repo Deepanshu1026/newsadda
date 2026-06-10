@@ -92,31 +92,6 @@ export default function SafeAdSlot({ slotType = "leaderboard", className = "" })
     );
   }
 
-  // Development: Shows dashed placeholder so you can visually verify layouts and slots!
-  return (
-    <div
-      className={`adsense-safe-slot adsense-safe-slot--${slotType} ${className}`}
-      style={{
-        width: currentLayout.width,
-        minHeight: currentLayout.minHeight,
-        maxHeight: currentLayout.maxHeight,
-      }}
-    >
-      <div className="adsense-safe-slot__chrome">
-        <span className="adsense-safe-slot__label">Sponsored Advertisement</span>
-        <span className="adsense-safe-slot__badge">{slotType}</span>
-      </div>
-      <div className="adsense-safe-slot__content">
-        <div className="adsense-safe-slot__icon" aria-hidden="true">
-          AD
-        </div>
-        <div className="adsense-safe-slot__copy">
-          <span className="adsense-safe-slot__title">Ad space reserved</span>
-          <span className="adsense-safe-slot__desc">
-            This placement uses the same shared ad UI across the site.
-          </span>
-        </div>
-      </div>
-    </div>
-  );
+  // Development: Renders nothing to keep sandbox layouts clean of static ad boxes
+  return null;
 }

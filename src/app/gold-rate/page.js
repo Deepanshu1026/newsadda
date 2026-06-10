@@ -127,7 +127,7 @@ export default async function GoldRatePage() {
   };
 
   return (
-    <main className="main-wrapper" style={{ paddingTop: "calc(var(--navbar-height) + 36px)" }}>
+    <main className="main-wrapper">
       <JsonLd schema={jsonLdDataset} />
       <JsonLd schema={jsonLdFAQ} />
 

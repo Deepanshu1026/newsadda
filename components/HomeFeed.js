@@ -197,17 +197,19 @@ export default function HomeFeed({ initialPosts = [] }) {
     <div className="main-wrapper">
       <div className="content-panel">
 
-        {/* ── Hero / Blog Header ─────────────────────────────── */}
-        <section className="feed-hero" id="blog-hero-section" aria-label="Blog header">
-          <span className="feed-hero-eyebrow">Our Blog</span>
-          <h1 className="feed-hero-title">Stories &amp; Ideas</h1>
-          <p className="feed-hero-desc">
-            Curated, trusted and fast news coverage from the world's leading publishers — real-time and
-            SEO-optimised.
-          </p>
+
+        {/* ── Category Filter Row ─────────────────────────────── */}
+        <section className="category-filter-row" aria-label="Filter articles by category" style={{ marginBottom: "16px" }}>
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`category-pill-btn ${selectedCategory === cat ? "active" : ""}`}
+            >
+              {cat}
+            </button>
+          ))}
         </section>
-
-
 
         {/* ── Above-the-fold Premium Ad Slot ─────────────────── */}
         <SafeAdSlot slotType="leaderboard" />
@@ -254,13 +256,106 @@ export default function HomeFeed({ initialPosts = [] }) {
                   </p>
                 )}
               </div>
-              <div className="top-stories-ad-card">
-                <div className="top-stories-ad-label">Sponsored Advertisement</div>
-                <SafeAdSlot slotType="rectangle" className="top-stories-ad-slot" />
-              </div>
+              {process.env.NODE_ENV === "production" && (
+                <div className="top-stories-ad-card">
+                  <div className="top-stories-ad-label">Sponsored Advertisement</div>
+                  <SafeAdSlot slotType="rectangle" className="top-stories-ad-slot" />
+                </div>
+              )}
             </aside>
           </section>
         )}
+
+        {/* ── Meet Our Editorial Team ────────────────────────── */}
+        <section 
+          style={{
+            backgroundColor: "var(--bg-surface, rgba(255, 255, 255, 0.88))",
+            border: "1px solid var(--border-subtle)",
+            borderRadius: "16px",
+            padding: "24px",
+            boxShadow: "var(--card-shadow)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            marginTop: "16px",
+            marginBottom: "16px"
+          }}
+          aria-label="Editorial board and journalists"
+        >
+          <style dangerouslySetInnerHTML={{__html: `
+            .editorial-author-card:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 8px 16px -4px rgba(15,23,42,0.08);
+              border-color: var(--accent-primary) !important;
+            }
+          `}} />
+
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
+            <span style={{ width: "4px", height: "18px", backgroundColor: "var(--accent-primary)", borderRadius: "2px", display: "inline-block" }} />
+            <h2 style={{ fontSize: "1.15rem", fontWeight: "800", margin: 0, fontFamily: "var(--font-display)" }}>
+              Meet Our Editorial Team
+            </h2>
+          </div>
+          
+          <div 
+            style={{ 
+              display: "grid", 
+              gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", 
+              gap: "16px" 
+            }}
+          >
+            {[
+              { name: "Deepanshu Bisht", role: "Founder & Tech Editor", slug: "deepanshu-bisht", color: "#4f46e5" },
+              { name: "Anselm Noronha", role: "Senior Sports Editor", slug: "anselm-noronha", color: "#0284c7" },
+              { name: "Ritabrata Banerjee", role: "Football Correspondent", slug: "ritabrata-banerjee", color: "#b91c1c" },
+              { name: "NewsAdda Editorial Board", role: "Editorial Board", slug: "newsadda-editorial-board", color: "#0f172a" }
+            ].map((author) => (
+              <Link key={author.slug} href={`/author/${author.slug}`} style={{ textDecoration: "none" }}>
+                <div 
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    padding: "16px",
+                    borderRadius: "12px",
+                    backgroundColor: "var(--bg-card, #ffffff)",
+                    border: "1px solid var(--border-subtle)",
+                    transition: "transform 0.18s ease, box-shadow 0.18s ease",
+                    cursor: "pointer"
+                  }}
+                  className="editorial-author-card"
+                >
+                  <div 
+                    style={{
+                      width: "42px",
+                      height: "42px",
+                      borderRadius: "50%",
+                      backgroundColor: author.color,
+                      color: "#ffffff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: "800",
+                      fontSize: "1rem"
+                    }}
+                  >
+                    {author.name.charAt(0)}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: "0.85rem", fontWeight: "800", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: "4px" }}>
+                      {author.name}
+                      <span style={{ color: "var(--accent-success, #16a34a)", display: "inline-flex" }} title="Verified Journalist">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      </span>
+                    </div>
+                    <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", fontWeight: "500", marginTop: "2px" }}>{author.role}</div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
 
         {/* ── Mid-feed Ad Slot to Monetise Scrolling Readers ─── */}
         {gridPosts.length > 0 && <SafeAdSlot slotType="leaderboard" />}
@@ -288,6 +383,59 @@ export default function HomeFeed({ initialPosts = [] }) {
             </div>
           </section>
         )}
+
+        {/* ── About NewsAdda (E-E-A-T Identity & Transparency) ──── */}
+        <section 
+          style={{
+            backgroundColor: "var(--bg-surface, rgba(255, 255, 255, 0.88))",
+            border: "1px solid var(--border-subtle)",
+            borderRadius: "20px",
+            padding: "32px",
+            boxShadow: "var(--card-shadow)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            marginTop: "32px",
+            display: "grid",
+            gridTemplateColumns: "1fr",
+            gap: "24px"
+          }}
+          className="about-newsadda-section"
+        >
+          <style dangerouslySetInnerHTML={{__html: `
+            @media (min-width: 768px) {
+              .about-newsadda-section {
+                grid-template-columns: 2fr 1fr !important;
+              }
+            }
+          `}} />
+
+          <div>
+            <h2 style={{ fontSize: "1.3rem", fontWeight: "800", color: "var(--text-primary)", margin: "0 0 12px 0", fontFamily: "var(--font-display)" }}>
+              About NewsAdda
+            </h2>
+            <p style={{ fontSize: "0.92rem", lineHeight: "1.65", color: "var(--text-secondary)", margin: 0 }}>
+              NewsAdda is an independent digital news platform delivering high-integrity coverage across Politics, Technology, Cricket, Geopolitics, and Opinion. Founded in 2026 by lead developer and technology editor <strong>Deepanshu Bisht</strong>, our platform is committed to providing factual, verified information (E-E-A-T). All articles, analytical briefs, and tutorials undergo rigorous validation by our accredited Editorial Board.
+            </p>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px", justifyContent: "center", borderLeft: "1px solid var(--border-subtle)", paddingLeft: "24px" }}>
+            <h4 style={{ fontSize: "0.8rem", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-muted)", margin: 0 }}>
+              Editorial Integrity
+            </h4>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px", fontSize: "0.82rem" }}>
+              <Link href="/about" style={{ color: "var(--accent-primary)", fontWeight: "600", textDecoration: "none" }}>
+                Our Editorial Board & Policies ↗
+              </Link>
+              <Link href="/editorial-policy" style={{ color: "var(--accent-primary)", fontWeight: "600", textDecoration: "none" }}>
+                Ethics & Corrections Policy ↗
+              </Link>
+              <Link href="/contact" style={{ color: "var(--accent-primary)", fontWeight: "600", textDecoration: "none" }}>
+                Contact the Newsroom Desk ↗
+              </Link>
+            </div>
+          </div>
+        </section>
+
       </div>
     </div>
   );
