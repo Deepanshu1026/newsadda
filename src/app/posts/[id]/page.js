@@ -1,6 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import { readDatabase } from "../../../../services/db";
 import { SEO_CONFIG, getCanonicalUrl } from "../../../../services/seo/config";
+import { getPostKeywordString } from "../../../../services/seo/keywords";
+import { getTrendSlugs } from "../../../../services/trends/trendFetcher";
 import ArticlePageContent from "../../../../components/ArticlePageContent";
 
 export const revalidate = 60;
@@ -26,13 +28,12 @@ export async function generateMetadata({ params }) {
     };
   }
 
-  const categoryKeyword = post.category ? `${post.category.toLowerCase()}, ` : "";
   const authorSlug = (post.author || SEO_CONFIG.defaultAuthor).toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
   return {
     title: `${post.title} | ${SEO_CONFIG.siteName}`,
     description: post.description,
-    keywords: `${categoryKeyword}tech news, newsadda, AI article, trending updates, organic search`,
+    keywords: getPostKeywordString(post),
     alternates: {
       canonical: getCanonicalUrl(`/posts/${post.id}`),
       languages: {
@@ -102,6 +103,8 @@ export default async function ArticlePage({ params }) {
       post={post}
       relatedPosts={relatedPosts}
       trendingPosts={trendingPosts}
+      allPosts={allPosts}
+      trendSlugs={getTrendSlugs()}
       lang="en"
     />
   );

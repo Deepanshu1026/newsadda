@@ -15,10 +15,12 @@ export const revalidate = 60;
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   const trend = getTrendOverview(slug);
+  const phrase = slug.replace(/-/g, " ");
 
   return {
     title: `${trend.title} | ${SEO_CONFIG.siteName}`,
     description: trend.description,
+    keywords: `${trend.title}, ${phrase}, ${phrase} latest news, ${phrase} updates 2026, trending topic india, google trends india, newsadda`,
     alternates: {
       canonical: getCanonicalUrl(`/trends/${slug}`)
     },

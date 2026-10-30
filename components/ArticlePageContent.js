@@ -5,11 +5,13 @@ import { getPostUrl } from "../lib/utils";
 import { getAuthorProfile } from "../services/authorService";
 import JsonLd from "./seo/JsonLd";
 import { getNewsArticleSchema, getBreadcrumbSchema, getFaqSchema } from "../services/seo/schema";
+import { buildInternalLinkMap, getPostKeywords } from "../services/seo/keywords";
 import PerformanceImage from "./seo/PerformanceImage";
 import SafeAdSlot from "./seo/SafeAdSlot";
 import DynamicToc from "./layout/DynamicToc";
+import TrendingTopics from "./TrendingTopics";
 
-function parseMarkdownToReact(text) {
+function parseMarkdownToReact(text, linkMap = []) {
   if (!text) return null;
 
   const lines = text.split("\n");
@@ -19,6 +21,43 @@ function parseMarkdownToReact(text) {
   let codeContent = [];
   let codeLanguage = "";
   let keyIndex = 0;
+
+  // Track which internal phrases have already been linked (link each phrase once per article).
+  const linkedPhrases = new Set();
+
+  // Wrap the FIRST remaining occurrence of each internal-link phrase inside a text segment.
+  const linkifySegment = (segment) => {
+    if (!segment) return [];
+    if (!linkMap || linkMap.length === 0) return [segment];
+
+    const lower = segment.toLowerCase();
+    let best = null;
+    for (const l of linkMap) {
+      if (linkedPhrases.has(l.phrase)) continue;
+      const idx = lower.indexOf(l.phrase.toLowerCase());
+      if (idx >= 0 && (!best || idx < best.idx)) {
+        best = { idx, phrase: l.phrase, url: l.url };
+      }
+    }
+    if (!best) return [segment];
+
+    linkedPhrases.add(best.phrase);
+    const before = segment.slice(0, best.idx);
+    const matched = segment.slice(best.idx, best.idx + best.phrase.length);
+    const after = segment.slice(best.idx + best.phrase.length);
+
+    return [
+      ...(before ? [before] : []),
+      <Link
+        key={`ilink-${best.phrase}`}
+        href={best.url}
+        style={{ color: "var(--accent-primary)", fontWeight: "600", textDecoration: "underline", textDecorationColor: "rgba(79,70,229,0.35)" }}
+      >
+        {matched}
+      </Link>,
+      ...linkifySegment(after),
+    ];
+  };
 
   const parseInlineStyles = (lineText) => {
     const parts = [];
@@ -31,7 +70,7 @@ function parseMarkdownToReact(text) {
       const matchIndex = match.index;
 
       if (matchIndex > currentIdx) {
-        parts.push(lineText.substring(currentIdx, matchIndex));
+        parts.push(...linkifySegment(lineText.substring(currentIdx, matchIndex)));
       }
 
       if (matchText.startsWith("**") && matchText.endsWith("**")) {
@@ -44,7 +83,7 @@ function parseMarkdownToReact(text) {
     }
 
     if (currentIdx < lineText.length) {
-      parts.push(lineText.substring(currentIdx));
+      parts.push(...linkifySegment(lineText.substring(currentIdx)));
     }
 
     return parts.length > 0 ? parts : lineText;
@@ -162,7 +201,7 @@ const parseFaqsFromContent = (text) => {
   return questions;
 };
 
-export default function ArticlePageContent({ post, relatedPosts, trendingPosts, lang = "en" }) {
+export default function ArticlePageContent({ post, relatedPosts, trendingPosts, allPosts = [], trendSlugs = [], lang = "en" }) {
   const articleSchema = getNewsArticleSchema(post);
   const breadcrumbSchema = getBreadcrumbSchema([
     { name: post.category || "News", url: `/category/${(post.category || "news").toLowerCase()}` },
@@ -173,6 +212,10 @@ export default function ArticlePageContent({ post, relatedPosts, trendingPosts, 
   const authorProfile = getAuthorProfile(post.author || SEO_CONFIG.defaultAuthor);
   const authorSlug = authorProfile.slug;
   const categorySlug = (post.category || "news").toLowerCase();
+
+  // Internal deep-linking map + keyword tags
+  const linkMap = buildInternalLinkMap(post, trendSlugs, 4);
+  const postKeywords = getPostKeywords(post);
 
   return (
     <div className="main-wrapper">
@@ -247,8 +290,37 @@ export default function ArticlePageContent({ post, relatedPosts, trendingPosts, 
               <DynamicToc selector=".article-content" />
 
               <div className="article-content">
-                {parseMarkdownToReact(post.content)}
+                {parseMarkdownToReact(post.content, linkMap)}
               </div>
+
+              {/* Keyword tags (internal links) */}
+              {postKeywords.length > 0 && (
+                <div style={{ marginTop: "32px", paddingTop: "20px", borderTop: "1px solid var(--border-subtle)" }}>
+                  <div style={{ fontSize: "0.72rem", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-muted)", marginBottom: "10px" }}>
+                    Topics &amp; Keywords
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                    {postKeywords.slice(0, 14).map((kw) => (
+                      <Link
+                        key={kw}
+                        href={`/?search=${encodeURIComponent(kw)}`}
+                        style={{
+                          fontSize: "0.78rem",
+                          fontWeight: "500",
+                          padding: "4px 10px",
+                          borderRadius: "8px",
+                          background: "var(--bg-pill, #f4f4f5)",
+                          color: "var(--text-pill, #4f46e5)",
+                          border: "1px solid var(--border-subtle)",
+                          textDecoration: "none",
+                        }}
+                      >
+                        #{kw}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Premium Author Bio Box */}
               <div 
@@ -434,6 +506,11 @@ export default function ArticlePageContent({ post, relatedPosts, trendingPosts, 
               </div>
             </section>
           )}
+
+          {/* Site-wide trending topics & internal link cloud */}
+          <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+            <TrendingTopics posts={allPosts} title="Explore More Topics" />
+          </div>
 
         </div>
       </div>

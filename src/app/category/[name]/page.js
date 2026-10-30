@@ -21,12 +21,14 @@ function capitalize(str) {
 export async function generateMetadata({ params }) {
   const { name } = await params;
   const capitalized = capitalize(name);
+  const cat = name.toLowerCase().trim();
 
   return {
     title: `${capitalized} News & Updates | ${SEO_CONFIG.siteName}`,
     description: `Browse the latest, most comprehensive trending news, articles, and analysis on ${capitalized} in India and globally.`,
+    keywords: `${capitalized} news, ${cat} news today, ${cat} latest updates, ${cat} india, trending ${cat}, breaking ${cat} news, ${cat} headlines, newsadda`,
     alternates: {
-      canonical: getCanonicalUrl(`/category/${name.toLowerCase()}`)
+      canonical: getCanonicalUrl(`/category/${cat}`)
     },
     openGraph: {
       title: `${capitalized} News | ${SEO_CONFIG.siteName}`,

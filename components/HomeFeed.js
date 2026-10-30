@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import PerformanceImage from "./seo/PerformanceImage";
 import SafeAdSlot from "./seo/SafeAdSlot";
+import TrendingTopics from "./TrendingTopics";
 import { getPostUrl } from "../lib/utils";
 
 // ─── Helper utilities ──────────────────────────────────────────────────────
@@ -265,6 +266,9 @@ export default function HomeFeed({ initialPosts = [] }) {
             </aside>
           </section>
         )}
+
+        {/* ── Trending Topics & Internal Link Cloud ──────────── */}
+        <TrendingTopics posts={initialPosts} />
 
         {/* ── Meet Our Editorial Team ────────────────────────── */}
         <section 
