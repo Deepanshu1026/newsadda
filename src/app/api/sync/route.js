@@ -3,6 +3,11 @@ import { revalidatePath } from "next/cache";
 import { fetchLatestNews } from "../../../../services/newsService";
 import { generateBlogArticle, generateHindiBlogArticle, generateHinglishBlogArticle } from "../../../../services/sarvamService";
 import { readDatabase, writeDatabase } from "../../../../services/db";
+import { fetchGoogleTrends } from "../../../../services/trends/googleTrendsService";
+
+// Allow the sync pipeline (news fetch + AI generation + DB write) enough time on Vercel.
+export const maxDuration = 60;
+export const dynamic = "force-dynamic";
 
 function getCategoryImage(category) {
   const images = {
@@ -28,14 +33,16 @@ function getCategoryImage(category) {
   return catList[randomIndex];
 }
 
-// Basic completeness guard: checks word count and ending punctuation
+// Completeness guard: requires a real article body (word count + markdown structure).
+// Note: articles intentionally end with a "Trending SEO Keywords" bullet list, so we
+// must NOT require the final character to be punctuation.
 function isContentComplete(text) {
   if (!text || typeof text !== "string") return false;
-  const words = text.trim().split(/\s+/).length;
+  const trimmed = text.trim();
+  const words = trimmed.split(/\s+/).length;
   if (words < 200) return false;
-  const lastChar = text.trim().slice(-1);
-  const properEndings = new Set([".", "!", "?", '"', "'", "”", "'", "।"]);
-  if (!properEndings.has(lastChar)) return false;
+  const headingCount = (trimmed.match(/^###\s+/gm) || []).length;
+  if (headingCount < 2) return false;
   return true;
 }
 
@@ -84,7 +91,26 @@ export async function POST() {
       const language = isHindi ? "hi" : isHinglish ? "hinglish" : "en";
 
       console.log(`[Sync API] Querying headlines for category: ${category}`);
-      const headlines = await fetchLatestNews(newsCategory);
+      let headlines = [];
+      if (newsCategory === "google-trends") {
+        const trendsGeo = process.env.TRENDS_GEO || "IN";
+        const rawTrends = await fetchGoogleTrends(trendsGeo);
+        headlines = rawTrends
+          .filter(t => t.newsItems && t.newsItems.length > 0)
+          .map(t => {
+            const primaryNews = t.newsItems[0];
+            return {
+              title: primaryNews.title,
+              description: primaryNews.snippet || `Latest search trend regarding ${t.title} in India.`,
+              source: primaryNews.source || "Google Trends",
+              author: primaryNews.source || "Google Trends Desk",
+              image: t.picture || null,
+              publishedAt: new Date().toISOString()
+            };
+          });
+      } else {
+        headlines = await fetchLatestNews(newsCategory);
+      }
 
       for (const headline of headlines) {
         if (addedCount >= maxPostsToGenerate) break;
@@ -144,14 +170,14 @@ export async function POST() {
           id: slug,
           title: headline.title,
           description: headline.description,
-          category: newsCategory.charAt(0).toUpperCase() + newsCategory.slice(1),
+          category: newsCategory === "google-trends" ? "Trends" : (newsCategory.charAt(0).toUpperCase() + newsCategory.slice(1)),
           image: headline.image || getCategoryImage(newsCategory),
           content: content,
           publishedAt: new Date().toISOString(),
           readTime: `${Math.max(3, Math.ceil(content.split(/\s+/).length / 200))} min read`,
           views: 0,
           author: headline.author || "NewsAdda Editorial",
-          language: isHindi ? "hi" : "en"
+          language: language
         };
 
         posts = [newPost, ...posts];

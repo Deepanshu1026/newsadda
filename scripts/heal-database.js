@@ -20,7 +20,7 @@ envContent.split("\n").forEach(line => {
 });
 
 const apiKey = env.SARVAM_API_KEY;
-const modelName = env.SARVAM_MODEL || "sarvam-105b";
+const modelName = env.SARVAM_MODEL || "sarvam-105b-conversations";
 const firestoreProjectId = env.FIRESTORE_PROJECT_ID || "auth-5ccab";
 const firestoreApiKey = env.FIRESTORE_API_KEY || "AIzaSyAU7ldBTC2wAS6zdp8K7LkUnk0ghEsHePs";
 

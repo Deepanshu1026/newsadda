@@ -44,6 +44,13 @@ const TREND_REGISTRY = {
 };
 
 /**
+ * Returns the list of registered trend slugs (for sitemap generation).
+ */
+export function getTrendSlugs() {
+  return Object.keys(TREND_REGISTRY);
+}
+
+/**
  * Returns dynamic entity details based on slug
  * @param {string} slug - The trend slug
  */

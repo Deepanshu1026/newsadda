@@ -16,7 +16,7 @@ async function getSearchContext(title, language = "en") {
 // --- English blog generator ---
 export async function generateBlogArticle(title, description, category = "Technology") {
   const apiKey = process.env.SARVAM_API_KEY;
-  const modelName = process.env.SARVAM_MODEL || "sarvam-105b";
+  const modelName = process.env.SARVAM_MODEL || "sarvam-105b-conversations";
 
   const searchContext = await getSearchContext(title, "en");
 
@@ -108,9 +108,9 @@ CRITICAL INSTRUCTIONS — WRITE LIKE A HUMAN JOURNALIST WITH AN ANALYTICAL PATTE
     if (!response.ok) {
       const errText = await response.text();
       console.warn(`[Sarvam Service] API returned status ${response.status}: ${errText}. Attempting secondary model fallback.`);
-      const secondaryModel = modelName === "sarvam-105b" ? "sarvam-30b" : "sarvam-105b";
+      const secondaryModel = modelName === "sarvam-105b-conversations" ? "sarvam-105b" : "sarvam-105b-conversations";
       console.log(`[Sarvam Service] Retrying with secondary model: ${secondaryModel}`);
-      response = await callApi(secondaryModel, 4096);
+      response = await callApi(secondaryModel, 16384);
     }
 
     if (!response.ok) {
@@ -133,7 +133,7 @@ CRITICAL INSTRUCTIONS — WRITE LIKE A HUMAN JOURNALIST WITH AN ANALYTICAL PATTE
 // --- Hindi blog generator ---
 export async function generateHindiBlogArticle(title, description, category = "Technology") {
   const apiKey = process.env.SARVAM_API_KEY;
-  const modelName = process.env.SARVAM_MODEL || "sarvam-105b";
+  const modelName = process.env.SARVAM_MODEL || "sarvam-105b-conversations";
 
   const searchContext = await getSearchContext(title, "hi");
 
@@ -225,8 +225,8 @@ ${searchContext ? `यहां वास्तविक समय की पृ
     if (!response.ok) {
       const errText = await response.text();
       console.warn(`[Sarvam Service] Hindi API returned status ${response.status}: ${errText}. Attempting secondary model fallback.`);
-      const secondaryModel = modelName === "sarvam-105b" ? "sarvam-30b" : "sarvam-105b";
-      response = await callApi(secondaryModel, 4096);
+      const secondaryModel = modelName === "sarvam-105b-conversations" ? "sarvam-105b" : "sarvam-105b-conversations";
+      response = await callApi(secondaryModel, 16384);
     }
 
     if (!response.ok) {
@@ -333,7 +333,7 @@ ${closing}
 // --- Hinglish blog generator ---
 export async function generateHinglishBlogArticle(title, description, category = "Technology") {
   const apiKey = process.env.SARVAM_API_KEY;
-  const modelName = process.env.SARVAM_MODEL || "sarvam-105b";
+  const modelName = process.env.SARVAM_MODEL || "sarvam-105b-conversations";
 
   const searchContext = await getSearchContext(title, "en"); // Hinglish uses English news search
 
@@ -426,8 +426,8 @@ CRITICAL INSTRUCTIONS — WRITE LIKE A REAL INDIAN BLOGGER WITH AN ANALYTICAL PA
     if (!response.ok) {
       const errText = await response.text();
       console.warn(`[Sarvam Service] Hinglish API returned status ${response.status}: ${errText}. Attempting secondary model fallback.`);
-      const secondaryModel = modelName === "sarvam-105b" ? "sarvam-30b" : "sarvam-105b";
-      response = await callApi(secondaryModel, 4096);
+      const secondaryModel = modelName === "sarvam-105b-conversations" ? "sarvam-105b" : "sarvam-105b-conversations";
+      response = await callApi(secondaryModel, 16384);
     }
 
     if (!response.ok) {

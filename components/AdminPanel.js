@@ -223,10 +223,31 @@ export default function AdminPanel({ onSyncComplete }) {
 
     setLoadingHeadlines(true);
     try {
-      const res = await fetch(`/api/trending-news?category=${encodeURIComponent(cat)}`);
+      const endpoint = cat === "google-trends"
+        ? "/api/google-trends"
+        : `/api/trending-news?category=${encodeURIComponent(cat)}`;
+
+      const res = await fetch(endpoint);
       if (res.ok) {
         const data = await res.json();
-        const categoryHeadlines = data.headlines || [];
+        let categoryHeadlines = [];
+        if (cat === "google-trends") {
+          categoryHeadlines = (data.trends || [])
+            .filter(t => t.newsItems && t.newsItems.length > 0)
+            .map(t => {
+              const primaryNews = t.newsItems[0];
+              return {
+                title: primaryNews.title,
+                description: primaryNews.snippet || `Latest search trend regarding ${t.title} in India.`,
+                source: primaryNews.source || "Google Trends",
+                author: primaryNews.source || "Google Trends Desk",
+                image: t.picture || null,
+                publishedAt: new Date().toISOString()
+              };
+            });
+        } else {
+          categoryHeadlines = data.headlines || [];
+        }
         setHeadlines(categoryHeadlines);
         if (canCache) {
           setCachedHeadlines(prev => ({
@@ -291,7 +312,7 @@ export default function AdminPanel({ onSyncComplete }) {
         return [...prev, {
           title: headline.title,
           description: headline.description || "Latest automated trending update.",
-          category: activeCategory || searchedTerm || "News",
+          category: activeCategory === "google-trends" ? "Trends" : (activeCategory || searchedTerm || "News"),
           image: headline.image,
           author: headline.author || "NewsAdda India Desk"
         }];
@@ -309,7 +330,7 @@ export default function AdminPanel({ onSyncComplete }) {
           .map(h => ({
             title: h.title,
             description: h.description || "Latest automated trending update.",
-            category: activeCategory || searchedTerm || "News",
+            category: activeCategory === "google-trends" ? "Trends" : (activeCategory || searchedTerm || "News"),
             image: h.image,
             author: h.author || "NewsAdda India Desk"
           }));
@@ -783,7 +804,7 @@ export default function AdminPanel({ onSyncComplete }) {
           marginBottom: "16px"
         }}>
           <div className="category-bar" style={{ marginBottom: 0, paddingBottom: 0 }}>
-            {["politics", "cricket", "technology", "science", "business", "crime"].map((cat) => (
+            {["politics", "cricket", "technology", "science", "business", "crime", "google-trends"].map((cat) => (
               <button
                 key={cat}
                 className={`category-btn ${activeCategory === cat ? "active" : ""}`}
@@ -795,7 +816,7 @@ export default function AdminPanel({ onSyncComplete }) {
                   color: "#ffffff"
                 } : {}}
               >
-                {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                {cat === "google-trends" ? "Google Trends 🔥" : (cat.charAt(0).toUpperCase() + cat.slice(1))}
               </button>
             ))}
           </div>
