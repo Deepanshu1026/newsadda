@@ -339,39 +339,94 @@ export default function AdminPanel({ onSyncComplete }) {
     }
   };
 
+  // Safely read a fetch response that may be JSON or a plain-text/HTML error page.
+  const readResponse = async (res) => {
+    const raw = await res.text().catch(() => "");
+    if (!raw) return { payload: null, raw: "" };
+    try {
+      return { payload: JSON.parse(raw), raw };
+    } catch {
+      return { payload: null, raw };
+    }
+  };
+
   const handleBulkGenerate = async () => {
     if (selectedArticles.length === 0) return;
 
+    const articlesToSend = [...selectedArticles];
+    const total = articlesToSend.length;
+
+    // Process in small batches so each serverless request stays well under the
+    // platform timeout (10 sequential AI generations would exceed it).
+    const CHUNK_SIZE = 3;
+    const chunks = [];
+    for (let i = 0; i < articlesToSend.length; i += CHUNK_SIZE) {
+      chunks.push(articlesToSend.slice(i, i + CHUNK_SIZE));
+    }
+
     setBulkGenerating(true);
     setBulkStatus("Starting manual AI blog generation...");
-    setBulkLogs(["[System] Starting manual bulk generation for " + selectedArticles.length + " article(s)..."]);
+    setBulkLogs([
+      `[System] Starting manual bulk generation for ${total} article(s) in ${chunks.length} batch(es)...`,
+      "[News Client] Packaging selected headlines...",
+    ]);
+
+    let totalGenerated = 0;
+    const succeededTitles = new Set();
+    const failedTitles = new Set();
+    let processed = 0;
 
     try {
-      const articlesToSend = selectedArticles;
+      for (let c = 0; c < chunks.length; c++) {
+        const chunk = chunks[c];
+        const batchLabel = `[Batch ${c + 1}/${chunks.length}]`;
 
-      setBulkLogs(prev => [...prev, "[News Client] Packaging selected headlines..."]);
-      await new Promise(resolve => setTimeout(resolve, 300));
+        for (const art of chunk) {
+          processed++;
+          setBulkLogs(prev => [...prev, `${batchLabel} [Sarvam AI] Writing ${processed}/${total}: "${art.title}"...`]);
+        }
 
-      for (let i = 0; i < articlesToSend.length; i++) {
-        const art = articlesToSend[i];
-        setBulkLogs(prev => [...prev, `[Sarvam AI] Writing blog article ${i + 1}/${articlesToSend.length}: "${art.title}"...`]);
-        await new Promise(resolve => setTimeout(resolve, 500));
+        let res;
+        try {
+          res = await fetch("/api/sync/manual", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ articles: chunk, language: generationLanguage }),
+          });
+        } catch (netErr) {
+          chunk.forEach(a => failedTitles.add(a.title));
+          setBulkLogs(prev => [...prev, `${batchLabel} [Error] Network failure: ${netErr.message}`]);
+          continue;
+        }
+
+        const { payload, raw } = await readResponse(res);
+
+        if (res.ok && payload && payload.success) {
+          const count = payload.generatedCount || 0;
+          totalGenerated += count;
+          (payload.articles || []).forEach(a => succeededTitles.add(a.title));
+          setBulkLogs(prev => [...prev, `${batchLabel} [Firestore] Saved ${count} article(s).`]);
+          if (payload.failedCount) {
+            (payload.failures || []).forEach(f => failedTitles.add(f.title));
+            setBulkLogs(prev => [...prev, `${batchLabel} [Warn] ${payload.failedCount} article(s) failed to generate.`]);
+          }
+        } else {
+          const reason =
+            (payload && payload.error) ||
+            (raw && raw.trim().slice(0, 180)) ||
+            `HTTP ${res.status}`;
+          chunk.forEach(a => failedTitles.add(a.title));
+          setBulkLogs(prev => [...prev, `${batchLabel} [Error] ${reason}`]);
+        }
       }
 
-      setBulkLogs(prev => [...prev, "[Database] Saving new articles persistently to Firestore..."]);
-
-      const res = await fetch("/api/sync/manual", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ articles: articlesToSend, language: generationLanguage })
-      });
-
-      if (res.ok) {
-        const result = await res.json();
+      if (totalGenerated > 0) {
         setBulkLogs(prev => [
           ...prev,
-          `[Firestore] Successfully saved ${result.generatedCount} new articles!`,
-          "[System] Bulk generation completed successfully."
+          `[Firestore] Successfully saved ${totalGenerated} new article(s)!`,
+          failedTitles.size > 0
+            ? `[System] Bulk generation finished with ${failedTitles.size} failure(s). Failed items remain in the queue.`
+            : "[System] Bulk generation completed successfully.",
         ]);
         setBulkStatus("Bulk generation completed!");
 
@@ -380,10 +435,9 @@ export default function AdminPanel({ onSyncComplete }) {
         router.refresh();
         if (onSyncComplete) onSyncComplete();
 
-        setSelectedArticles([]);
+        // Keep only the articles that failed so they can be retried.
+        setSelectedArticles(prev => prev.filter(a => !succeededTitles.has(a.title)));
       } else {
-        const err = await res.json();
-        setBulkLogs(prev => [...prev, `[Error] Generation failed: ${err.error || "Unknown error"}`]);
         setBulkStatus("Generation failed.");
       }
     } catch (error) {

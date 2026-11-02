@@ -3,6 +3,10 @@ import { revalidatePath } from "next/cache";
 import { generateBlogArticle, generateHindiBlogArticle, generateHinglishBlogArticle } from "../../../../../services/sarvamService";
 import { readDatabase, writeDatabase } from "../../../../../services/db";
 
+// Allow enough time for a batch of AI generations on Vercel.
+export const maxDuration = 60;
+export const dynamic = "force-dynamic";
+
 function getCategoryImage(category) {
   const images = {
     technology: [
@@ -36,6 +40,32 @@ function getCategoryImage(category) {
   return catList[randomIndex];
 }
 
+function slugify(title, language) {
+  let slug = String(title || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\u0900-\u097F]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+  if (!slug) {
+    slug = `${language === "hi" ? "hi" : language === "hinglish" ? "hinglish" : "post"}-${Date.now()}`;
+  }
+  return slug;
+}
+
+/** Run async workers over items with a bounded concurrency limit. */
+async function mapWithConcurrency(items, limit, worker) {
+  const results = new Array(items.length);
+  let cursor = 0;
+  async function run() {
+    while (cursor < items.length) {
+      const i = cursor++;
+      results[i] = await worker(items[i], i);
+    }
+  }
+  const poolSize = Math.max(1, Math.min(limit, items.length));
+  await Promise.all(Array.from({ length: poolSize }, run));
+  return results;
+}
+
 export async function POST(request) {
   try {
     const body = await request.json();
@@ -53,78 +83,98 @@ export async function POST(request) {
 
     // Read existing database
     let posts = await readDatabase();
-    let generatedCount = 0;
-    const newlyGeneratedPosts = [];
 
+    // Pre-filter duplicates against the DB and within this batch
+    const existingKeys = new Set(
+      posts.map((p) => `${p.language || "en"}::${(p.title || "").toLowerCase().trim()}`)
+    );
+    const seenInBatch = new Set();
+    const candidates = [];
     for (const article of articles) {
-      const { title, description, category, image, author } = article;
-
-      // 1. Double check for duplicates in same language
-      const titleExists = posts.some(
-        p =>
-          p.title.toLowerCase().trim() === title.toLowerCase().trim() &&
-          (p.language || "en") === language
-      );
-      if (titleExists) {
+      const title = (article?.title || "").trim();
+      if (!title) continue;
+      const key = `${language}::${title.toLowerCase()}`;
+      if (existingKeys.has(key) || seenInBatch.has(key)) {
         console.log(`[Manual Sync API] Skipping duplicate article [${language}]: ${title}`);
         continue;
       }
+      seenInBatch.add(key);
+      candidates.push(article);
+    }
 
+    // Generate content in parallel (bounded concurrency to respect API limits)
+    const generated = await mapWithConcurrency(candidates, 4, async (article) => {
+      const { title, description, category, image, author } = article;
       console.log(`[Manual Sync API] Writing [${language}] article via Sarvam: ${title}`);
 
-      // 2. Generate blog content via Sarvam (English, Hindi, or Hinglish)
       let content;
-      if (language === "hi") {
-        content = await generateHindiBlogArticle(title, description, category);
-      } else if (language === "hinglish") {
-        content = await generateHinglishBlogArticle(title, description, category);
-      } else {
-        content = await generateBlogArticle(title, description, category);
+      try {
+        if (language === "hi") {
+          content = await generateHindiBlogArticle(title, description, category);
+        } else if (language === "hinglish") {
+          content = await generateHinglishBlogArticle(title, description, category);
+        } else {
+          content = await generateBlogArticle(title, description, category);
+        }
+      } catch (err) {
+        console.error(`[Manual Sync API] Generation failed for "${title}":`, err.message);
+        return { error: title, message: err.message };
       }
 
-      // 3. Create clean URL slug (supports Devanagari for Hindi)
-      let slug = title
-        .toLowerCase()
-        .replace(/[^a-z0-9\u0900-\u097F]+/g, "-")
-        .replace(/(^-|-$)/g, "");
+      if (!content || typeof content !== "string") {
+        return { error: title, message: "Empty content returned" };
+      }
 
-      if (!slug) slug = `${language === "hi" ? "hi" : language === "hinglish" ? "hinglish" : "post"}-${Date.now()}`;
-      if (posts.some(p => p.id === slug)) {
+      return {
+        title,
+        description: description || "Latest automated trending update.",
+        category,
+        image,
+        author,
+        content,
+      };
+    });
+
+    const successes = generated.filter((g) => g && !g.error);
+    const failures = generated.filter((g) => g && g.error);
+
+    // Build new post objects with unique slugs
+    const newlyGeneratedPosts = [];
+    for (const g of successes) {
+      let slug = slugify(g.title, language);
+      if (posts.some((p) => p.id === slug) || newlyGeneratedPosts.some((p) => p.id === slug)) {
         slug = `${slug}-${Date.now().toString().slice(-4)}`;
       }
 
       const newPost = {
         id: slug,
-        title,
-        description: description || "Latest automated trending update.",
-        category: category.charAt(0).toUpperCase() + category.slice(1),
-        image: image || getCategoryImage(category),
-        content,
+        title: g.title,
+        description: g.description,
+        category: (g.category || "news").charAt(0).toUpperCase() + (g.category || "news").slice(1),
+        image: g.image || getCategoryImage(g.category),
+        content: g.content,
         publishedAt: new Date().toISOString(),
-        readTime: `${Math.max(3, Math.ceil(content.split(/\s+/).length / 200))} min read`,
+        readTime: `${Math.max(3, Math.ceil(g.content.split(/\s+/).length / 200))} min read`,
         views: 0,
-        author: author || "NewsAdda India Desk",
-        language
+        author: g.author || "NewsAdda India Desk",
+        language,
       };
 
-      // 4. Prepend to current list
-      posts = [newPost, ...posts];
       newlyGeneratedPosts.push(newPost);
-      generatedCount++;
     }
 
-    if (generatedCount > 0) {
-      // Save updated list to Firestore (stateless write)
+    if (newlyGeneratedPosts.length > 0) {
+      posts = [...newlyGeneratedPosts, ...posts];
       await writeDatabase(posts);
-      
-      // Flush client static page cache
       revalidatePath("/");
     }
 
     return NextResponse.json({
       success: true,
-      generatedCount,
-      articles: newlyGeneratedPosts.map(p => ({ id: p.id, title: p.title }))
+      generatedCount: newlyGeneratedPosts.length,
+      failedCount: failures.length,
+      articles: newlyGeneratedPosts.map((p) => ({ id: p.id, title: p.title })),
+      failures: failures.map((f) => ({ title: f.error, message: f.message })),
     });
   } catch (error) {
     console.error("[Manual Sync API] Bulk generation error:", error);
